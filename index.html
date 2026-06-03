@@ -1,340 +1,424 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>РАЙПО Слободской — магазин</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Слободское РАЙПО</title>
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
     :root {
-      --bg: #101114;
-      --surface: #181a20;
-      --surface-2: #20232b;
-      --line: rgba(255,255,255,.09);
-      --text: #f4f6fb;
-      --muted: #aab0bd;
-      --accent: #4f8cff;
-      --accent-2: #36c58a;
-      --danger: #ff6464;
-      --warning: #f6b84b;
-      --radius: 8px;
-      --shadow: 0 12px 34px rgba(0,0,0,.36);
+      --bg: #f3efe6;
+      --bg-soft: #fbf8f1;
+      --panel: rgba(255, 252, 245, 0.88);
+      --panel-strong: #fffdf8;
+      --text: #1f241d;
+      --muted: #5b6257;
+      --line: rgba(54, 63, 47, 0.12);
+      --accent: #275d38;
+      --accent-soft: #dde9da;
+      --warn: #b87412;
+      --danger: #b13a2f;
+      --radius: 20px;
+      --shadow: 0 24px 54px rgba(51, 44, 27, 0.12);
+      --font-display: "Segoe UI Semibold", "Trebuchet MS", sans-serif;
+      --font-body: "Segoe UI", "Trebuchet MS", sans-serif;
     }
 
     * { box-sizing: border-box; }
     html, body { min-height: 100%; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: var(--font-body);
       color: var(--text);
       background:
-        linear-gradient(135deg, rgba(79,140,255,.14), transparent 34%),
-        linear-gradient(315deg, rgba(54,197,138,.10), transparent 38%),
-        var(--bg);
-      overflow-x: hidden;
+        radial-gradient(circle at top left, rgba(39, 93, 56, 0.14), transparent 26%),
+        radial-gradient(circle at top right, rgba(184, 116, 18, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8f4ea 0%, #f1ebdf 100%);
     }
 
-    .app {
-      width: min(1040px, 100%);
+    .shell {
+      width: min(1180px, 100%);
       margin: 0 auto;
-      padding: 12px 12px 92px;
+      padding: 18px 14px 120px;
     }
 
-    .top {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      padding: 8px 0 10px;
-      background: linear-gradient(180deg, rgba(16,17,20,.96), rgba(16,17,20,.78));
-      backdrop-filter: blur(14px);
+    .hero {
+      position: static;
+      top: auto;
+      z-index: auto;
+      backdrop-filter: blur(18px);
+      background: linear-gradient(180deg, rgba(248, 244, 234, 0.95), rgba(248, 244, 234, 0.78));
       border-bottom: 1px solid var(--line);
+      margin: 0 0 16px;
+      padding: 18px 14px 14px;
     }
 
-    .header {
+    .hero-top {
       display: flex;
-      align-items: center;
+      align-items: start;
       justify-content: space-between;
       gap: 12px;
     }
 
-    .brand h1 {
-      margin: 0;
-      font-size: 17px;
-      line-height: 1.2;
-    }
-
-    .brand div {
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .cart-pill {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
       border-radius: 999px;
-      padding: 8px 10px;
-      font-weight: 800;
+      background: rgba(39, 93, 56, 0.08);
+      color: var(--accent);
       font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0 6px;
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      max-width: 720px;
+    }
+
+    .session-pill {
+      min-width: 160px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+    }
+
+    .session-pill strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-top: 14px;
+      scrollbar-width: none;
+    }
+
+    .nav::-webkit-scrollbar { display: none; }
+
+    .nav button,
+    .btn,
+    .icon-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+      box-shadow: 0 10px 24px rgba(51, 44, 27, 0.06);
+    }
+
+    .nav button {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
       white-space: nowrap;
     }
 
-    .tabs {
+    .nav button.active,
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn.soft {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .btn.warn {
+      background: rgba(184, 116, 18, 0.12);
+      border-color: rgba(184, 116, 18, 0.2);
+      color: #8a590c;
+    }
+
+    .btn.danger {
+      background: rgba(177, 58, 47, 0.1);
+      border-color: rgba(177, 58, 47, 0.16);
+      color: var(--danger);
+    }
+
+    .btn.full { width: 100%; }
+    .btn:active,
+    .nav button:active,
+    .icon-btn:active { transform: scale(0.98); }
+
+    .layout {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-top: 10px;
+      gap: 16px;
     }
-
-    .tab, .btn, .icon-btn {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: transform .16s ease, background .16s ease, border-color .16s ease;
-    }
-
-    .tab {
-      padding: 9px 6px;
-      font-size: 12px;
-      font-weight: 800;
-      text-align: center;
-    }
-
-    .tab.active {
-      background: rgba(79,140,255,.23);
-      border-color: rgba(79,140,255,.44);
-    }
-
-    .tab:active, .btn:active, .icon-btn:active { transform: scale(.98); }
 
     .screen {
       display: none;
-      animation: fadeIn .22s ease;
+      gap: 16px;
     }
 
-    .screen.active { display: block; }
-
-    .toolbar {
+    .screen.active {
       display: grid;
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .split {
+      display: grid;
+      gap: 16px;
+    }
+
+    .stats-grid,
+    .catalog-grid,
+    .admin-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.76), rgba(253,249,240,0.9));
+      border: 1px solid rgba(39, 93, 56, 0.08);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      font-size: 22px;
+      font-family: var(--font-display);
+    }
+
+    .catalog-toolbar,
+    .toolbar-row,
+    .action-row {
+      display: flex;
       gap: 10px;
-      margin: 12px 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search,
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.72);
+      color: var(--text);
+      font: inherit;
+    }
+
+    input,
+    textarea,
+    select {
+      padding: 12px 14px;
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
     }
 
     .search {
       display: flex;
       align-items: center;
       gap: 8px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      border-radius: var(--radius);
-      padding: 0 10px;
-    }
-
-    .search span { color: var(--muted); }
-
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      outline: none;
-      padding: 11px 12px;
-      font-size: 14px;
+      padding: 0 12px;
     }
 
     .search input {
       border: 0;
+      padding: 13px 0;
       background: transparent;
-      padding: 12px 0;
     }
 
-    textarea { min-height: 84px; resize: vertical; }
-    select option { color: #111; }
-
-    .chips {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      scrollbar-width: none;
-    }
-
-    .chips::-webkit-scrollbar { display: none; }
-
-    .chip {
-      flex: 0 0 auto;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 8px 11px;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .chip.active {
-      background: rgba(54,197,138,.18);
-      border-color: rgba(54,197,138,.36);
-    }
-
-    .grid {
-      display: grid;
+    .catalog-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    @media (min-width: 760px) {
-      .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .toolbar { grid-template-columns: 320px 1fr; align-items: start; }
     }
 
     .product {
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(24,26,32,.86);
-      box-shadow: var(--shadow);
-      min-height: 264px;
       display: flex;
       flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,239,227,0.92));
+      border: 1px solid rgba(39, 93, 56, 0.1);
+      min-height: 280px;
     }
 
-    .product-img {
-      height: 120px;
-      background: linear-gradient(135deg, rgba(79,140,255,.28), rgba(54,197,138,.18));
+    .product-visual {
+      height: 136px;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(39, 93, 56, 0.16), rgba(184, 116, 18, 0.18)),
+        linear-gradient(180deg, #f5f0e4, #ebe1cf);
       display: grid;
       place-items: center;
-      color: rgba(255,255,255,.82);
-      font-weight: 900;
-      font-size: 28px;
       overflow: hidden;
+      color: var(--accent);
+      font-size: 36px;
+      font-weight: 800;
     }
 
-    .product-img img {
+    .product-visual img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
     }
 
-    .product-body {
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
+    .product h3,
+    .section-title {
+      margin: 0;
+      font-family: var(--font-display);
     }
 
-    .product-title {
-      min-height: 34px;
-      font-size: 13px;
-      line-height: 1.28;
-      font-weight: 900;
+    .product h3 {
+      font-size: 16px;
+      line-height: 1.25;
     }
 
-    .product-desc {
+    .product p,
+    .muted,
+    .meta {
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.5;
     }
 
-    .product-bottom {
-      margin-top: auto;
+    .product-foot,
+    .line-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .price { font-size: 14px; font-weight: 950; }
-    .stock { color: var(--muted); font-size: 11px; }
-
-    .btn {
-      padding: 10px 12px;
-      font-weight: 900;
-      font-size: 13px;
+    .price {
+      font-size: 18px;
+      font-family: var(--font-display);
     }
 
-    .btn.primary {
-      background: rgba(79,140,255,.26);
-      border-color: rgba(79,140,255,.42);
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(39, 93, 56, 0.08);
+      color: var(--accent);
     }
 
-    .btn.success {
-      background: rgba(54,197,138,.20);
-      border-color: rgba(54,197,138,.38);
+    .badge.warn {
+      background: rgba(184, 116, 18, 0.13);
+      color: #8a590c;
     }
 
-    .btn.danger {
-      background: rgba(255,100,100,.16);
-      border-color: rgba(255,100,100,.32);
-    }
-
-    .btn.full { width: 100%; }
-    .btn:disabled { opacity: .55; cursor: not-allowed; }
-
-    .empty, .notice {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.05);
-      border-radius: var(--radius);
-      padding: 14px;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
+    .badge.danger {
+      background: rgba(177, 58, 47, 0.12);
+      color: var(--danger);
     }
 
     .list {
       display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .line {
-      display: grid;
-      grid-template-columns: 1fr auto;
       gap: 12px;
-      align-items: center;
-      border: 1px solid var(--line);
-      background: rgba(24,26,32,.86);
-      border-radius: var(--radius);
-      padding: 11px;
     }
 
-    .line-title { font-size: 14px; font-weight: 900; }
-    .line-sub { margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .line-item,
+    .order-card,
+    .admin-order,
+    .lead-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+    }
 
-    .qty {
+    .line-item {
       display: grid;
-      grid-template-columns: 34px 28px 34px 34px;
-      gap: 6px;
+      gap: 10px;
+    }
+
+    .qty-box {
+      display: flex;
       align-items: center;
+      gap: 8px;
     }
 
     .icon-btn {
-      width: 34px;
-      height: 34px;
-      font-size: 17px;
-      font-weight: 900;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      font-weight: 800;
+      display: grid;
+      place-items: center;
     }
 
-    .qty-value {
-      text-align: center;
-      font-weight: 900;
-      font-size: 13px;
+    .empty,
+    .notice {
+      padding: 18px;
+      border: 1px dashed rgba(39, 93, 56, 0.2);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.52);
+      color: var(--muted);
+      line-height: 1.55;
     }
 
     .form {
       display: grid;
       gap: 12px;
-      margin-top: 12px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
     }
 
     .field {
@@ -343,761 +427,2588 @@
     }
 
     .field label {
-      color: var(--muted);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 700;
+      color: var(--muted);
     }
 
-    .order {
-      border: 1px solid var(--line);
-      background: rgba(24,26,32,.86);
-      border-radius: var(--radius);
-      padding: 12px;
-    }
-
-    .order-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-weight: 900;
-      font-size: 14px;
-    }
-
-    .badge {
-      border-radius: 999px;
-      padding: 5px 8px;
-      background: rgba(246,184,75,.14);
-      border: 1px solid rgba(246,184,75,.28);
-      color: #ffd58a;
-      font-size: 11px;
-      font-weight: 900;
-      white-space: nowrap;
-    }
-
-    .bottom {
+    .bottom-bar {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
       z-index: 30;
-      padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-      background: linear-gradient(180deg, transparent, rgba(16,17,20,.96) 34%);
-      border-top: 1px solid var(--line);
-      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(243,239,230,0), rgba(243,239,230,0.94) 28%);
+      padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+      pointer-events: none;
     }
 
     .bottom-inner {
-      width: min(1040px, 100%);
+      width: min(1180px, 100%);
       margin: 0 auto;
-      display: grid;
+      display: none;
       grid-template-columns: 1fr auto;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .bottom-inner.visible {
+      display: grid;
+    }
+
+    .summary-box {
+      padding: 12px 16px;
+      border-radius: 18px;
+      background: rgba(255,252,245,0.94);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .summary-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+
+    .summary-box strong {
+      font-size: 18px;
+      font-family: var(--font-display);
+    }
+
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hidden { display: none !important; }
+
+    .message {
+      position: fixed;
+      left: 50%;
+      bottom: 98px;
+      transform: translateX(-50%);
+      z-index: 45;
+      min-width: min(520px, calc(100vw - 28px));
+      max-width: calc(100vw - 28px);
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(31, 36, 29, 0.96);
+      color: #fff;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+
+    .table {
+      display: grid;
       gap: 10px;
+    }
+
+    .admin-header {
+      display: grid;
+      gap: 14px;
+    }
+
+    .admin-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .admin-kpi {
+      padding: 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(241,235,223,0.82));
+      border: 1px solid rgba(39, 93, 56, 0.12);
+      box-shadow: 0 14px 30px rgba(51, 44, 27, 0.08);
+    }
+
+    .admin-kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .admin-kpi strong {
+      display: block;
+      font-size: 24px;
+      font-family: var(--font-display);
+    }
+
+    .admin-kpi small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .admin-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .admin-toolbar {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1.2fr 0.8fr;
       align-items: center;
     }
 
-    .total {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      border-radius: var(--radius);
-      padding: 9px 10px;
+    .admin-toolbar.compact {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .total div:first-child { color: var(--muted); font-size: 11px; }
-    .total div:last-child { margin-top: 2px; font-size: 15px; font-weight: 950; }
+    .admin-list {
+      display: grid;
+      gap: 12px;
+    }
 
-    .modal {
+    .admin-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+    }
+
+    .admin-card-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .admin-card-title {
+      font-size: 16px;
+      font-family: var(--font-display);
+    }
+
+    .admin-card-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .admin-two-col {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+
+    .admin-recent-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .admin-recent-item {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid rgba(39, 93, 56, 0.08);
+    }
+
+    .admin-empty {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.56);
+      border: 1px dashed rgba(39, 93, 56, 0.18);
+      color: var(--muted);
+    }
+
+    .thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      object-fit: cover;
+      background: linear-gradient(135deg, rgba(39, 93, 56, 0.18), rgba(184, 116, 18, 0.18));
+    }
+
+    .thumb-placeholder {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: var(--accent);
+      background: linear-gradient(135deg, rgba(39, 93, 56, 0.18), rgba(184, 116, 18, 0.18));
+    }
+
+    .admin-grid-wide {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+
+    .product.clickable {
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .product.clickable:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 38px rgba(51, 44, 27, 0.1);
+      border-color: rgba(39, 93, 56, 0.2);
+    }
+
+    .modal-overlay {
       position: fixed;
       inset: 0;
+      z-index: 80;
       display: none;
       align-items: end;
       justify-content: center;
-      z-index: 60;
-      background: rgba(0,0,0,.56);
-      padding: 14px;
+      padding: 16px;
+      background: rgba(28, 31, 25, 0.56);
+      backdrop-filter: blur(10px);
     }
 
-    .modal.active { display: flex; }
+    .modal-overlay.open {
+      display: flex;
+    }
 
-    .modal-body {
-      width: min(540px, 100%);
-      max-height: 86vh;
+    .modal-card {
+      width: min(920px, 100%);
+      max-height: 90vh;
       overflow: auto;
+      padding: 18px;
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(255,253,248,0.98), rgba(246,240,229,0.98));
+      border: 1px solid rgba(39, 93, 56, 0.14);
+      box-shadow: 0 28px 60px rgba(28, 22, 12, 0.2);
+    }
+
+    .modal-close-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+    }
+
+    .modal-close {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
       border: 1px solid var(--line);
-      background: var(--surface);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      animation: slideUp .22s ease;
+      background: rgba(255,255,255,0.8);
+      font-size: 20px;
+      cursor: pointer;
     }
 
-    .modal-content { padding: 12px; }
-    .hidden { display: none !important; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+    .product-modal-layout {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1fr;
     }
 
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
+    .product-modal-visual {
+      min-height: 260px;
+      border-radius: 22px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, rgba(39, 93, 56, 0.18), rgba(184, 116, 18, 0.2)),
+        linear-gradient(180deg, #f5f0e4, #ebe1cf);
+      color: var(--accent);
+      font-size: 64px;
+      font-weight: 800;
+    }
+
+    .product-modal-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .product-modal-title {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 4vw, 32px);
+      line-height: 1.1;
+      margin: 0;
+    }
+
+    .product-modal-meta {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .product-modal-meta-item {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(39, 93, 56, 0.08);
+    }
+
+    .product-modal-meta-item span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .product-modal-meta-item strong {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .product-modal-actions {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .product-modal-qty {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.68);
+      border: 1px solid rgba(39, 93, 56, 0.08);
+      width: fit-content;
+    }
+
+    .product-modal-qty strong {
+      min-width: 54px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .faq-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.74);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      width: 100%;
+      text-align: left;
+      padding: 16px 18px;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .faq-answer {
+      display: none;
+      padding: 0 18px 16px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    @media (min-width: 880px) {
+      .split {
+        grid-template-columns: 1.2fr 0.8fr;
+      }
+
+      .catalog-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .admin-grid {
+        grid-template-columns: 1.1fr 0.9fr;
+      }
+
+      .admin-kpi-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .admin-two-col {
+        grid-template-columns: 1.15fr 0.85fr;
+      }
+
+      .admin-grid-wide {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .product-modal-layout {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 699px) {
+      .hero-top {
+        flex-direction: column;
+      }
+
+      .session-pill {
+        width: 100%;
+      }
+
+      .catalog-grid,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-inner.visible {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-toolbar,
+      .admin-toolbar.compact,
+      .admin-kpi-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <div class="top">
-      <div class="header">
-        <div class="brand">
-          <h1>РАЙПО Слободской</h1>
-          <div id="userLine">Подключение VK...</div>
+  <div class="hero">
+    <div class="shell">
+      <div class="hero-top">
+        <div>
+          <div class="brand-tag">Личный кабинет</div>
+          <h1>Слободское РАЙПО</h1>
+          <p>
+            Сервис для оформления заявок, просмотра документов и работы по договорам поставки.
+          </p>
         </div>
-        <div class="cart-pill" id="cartPill">0 товаров</div>
-      </div>
-      <div class="tabs">
-        <button class="tab active" data-screen="catalog">Каталог</button>
-        <button class="tab" data-screen="cart">Корзина</button>
-        <button class="tab" data-screen="checkout">Заказ</button>
-        <button class="tab" data-screen="history">История</button>
-      </div>
-    </div>
-
-    <section class="screen active" id="catalogScreen">
-      <div class="toolbar">
-        <div class="search">
-          <span>⌕</span>
-          <input id="searchInput" type="search" placeholder="Поиск: хлеб, молоко, выпечка" />
+        <div class="session-pill" id="sessionPill">
+          <strong>Гость</strong>
+          <div>Загрузка данных VK…</div>
         </div>
-        <div class="chips" id="categoryChips"></div>
       </div>
-      <div class="grid" id="productGrid"></div>
-    </section>
-
-    <section class="screen" id="cartScreen">
-      <div class="list" id="cartList"></div>
-      <div class="form">
-        <button class="btn danger full" id="clearCartBtn">Очистить корзину</button>
-      </div>
-    </section>
-
-    <section class="screen" id="checkoutScreen">
-      <div class="notice">
-        Оплата в дипломном проекте имитируется: при выборе карты или СБП заказ сохраняется как оплаченный, без реального списания средств.
-      </div>
-      <div class="form">
-        <div class="field">
-          <label for="deliveryType">Способ получения</label>
-          <select id="deliveryType">
-            <option value="delivery">Доставка</option>
-            <option value="pickup">Самовывоз</option>
-          </select>
-        </div>
-        <div class="field" id="addressField">
-          <label for="addressInput">Адрес доставки</label>
-          <input id="addressInput" placeholder="г. Слободской, улица, дом, квартира" autocomplete="street-address" />
-        </div>
-        <div class="field">
-          <label for="phoneInput">Телефон</label>
-          <input id="phoneInput" placeholder="+7..." autocomplete="tel" />
-        </div>
-        <div class="field">
-          <label for="commentInput">Комментарий</label>
-          <textarea id="commentInput" placeholder="Например: позвонить за 10 минут"></textarea>
-        </div>
-        <div class="field">
-          <label for="paymentMethod">Способ оплаты</label>
-          <select id="paymentMethod">
-            <option value="card">Карта (имитация)</option>
-            <option value="sbp">СБП (имитация)</option>
-            <option value="cash">Наличными при получении</option>
-          </select>
-        </div>
-        <button class="btn success full" id="submitOrderBtn">Оплатить и оформить</button>
-        <div class="notice hidden" id="orderResult"></div>
-      </div>
-    </section>
-
-    <section class="screen" id="historyScreen">
-      <div class="list" id="ordersList"></div>
-    </section>
-  </div>
-
-  <div class="bottom">
-    <div class="bottom-inner">
-      <div class="total">
-        <div>Итого</div>
-        <div id="totalSum">0.00 ₽</div>
-      </div>
-      <button class="btn primary" id="primaryBtn">В корзину</button>
+      <div class="nav" id="nav"></div>
     </div>
   </div>
 
-  <div class="modal" id="productModal">
-    <div class="modal-body">
-      <div class="product-img" id="modalImage"></div>
-      <div class="modal-content">
-        <div class="order-head">
-          <div id="modalTitle">Товар</div>
-          <button class="icon-btn" id="closeModalBtn">×</button>
-        </div>
-        <p class="product-desc" id="modalDescription"></p>
-        <div class="line-sub" id="modalStock"></div>
-        <div class="product-bottom" style="margin-top:14px">
-          <div class="price" id="modalPrice">0 ₽</div>
-          <button class="btn primary" id="modalAddBtn">В корзину</button>
-        </div>
+  <main class="shell layout">
+    <section class="screen active" id="screen-home"></section>
+    <section class="screen" id="screen-catalog"></section>
+    <section class="screen" id="screen-cart"></section>
+    <section class="screen" id="screen-orders"></section>
+    <section class="screen" id="screen-docs"></section>
+    <section class="screen" id="screen-admin"></section>
+  </main>
+
+  <div class="bottom-bar">
+    <div class="bottom-inner" id="cartBottom">
+      <div class="summary-box">
+        <span>Корзина</span>
+        <strong id="cartSummary">0 позиций · 0.00 ₽</strong>
       </div>
+      <button class="btn primary" id="goCheckoutBtn">Оформить заявку</button>
     </div>
   </div>
+
+  <div class="message" id="toast"></div>
+  <div class="modal-overlay" id="productModal"></div>
 
   <script>
-  const qs = new URLSearchParams(location.search);
+    const state = {
+      vkId: null,
+      role: "guest",
+      isAdmin: false,
+      contractor: null,
+      categories: [],
+      products: [],
+      filteredProducts: [],
+      selectedProduct: null,
+      selectedProductQuantity: 1,
+      cart: {},
+      orders: [],
+      documents: [],
+      balance: null,
+      isSubmittingOrder: false,
+      reconciliationDocumentUrl: "",
+      admin: {
+        stats: null,
+        orders: [],
+        contractors: [],
+        leads: [],
+        supportRequests: [],
+        documentRequests: [],
+        documents: []
+      },
+      adminUi: {
+        orderSearch: "",
+        orderStatus: "",
+        productSearch: "",
+        productCategory: "",
+        contractorSearch: "",
+        leadSearch: "",
+        supportSearch: "",
+        supportStatus: ""
+      }
+    };
 
-  // Backend API URL - исправлено на правильный адрес Hugging Face
-  const BACKEND_URL = "https://sebbikkk-raipo-backend.hf.space";
+    const FAQ_ITEMS = [
+      {
+        question: "Как оформить заказ?",
+        answer: "Выберите товары в каталоге, добавьте их в корзину и подтвердите оформление заявки."
+      },
+      {
+        question: "Как войти в систему?",
+        answer: "Для входа используйте ИНН организации или номер договора после одобрения заявки на сотрудничество."
+      },
+      {
+        question: "Как получить счёт?",
+        answer: "После оформления заказа система автоматически сформирует PDF-счёт."
+      },
+      {
+        question: "Как работает отсрочка платежа?",
+        answer: "Для контрагентов с одобренным лимитом возможно оформление заказов с отсрочкой платежа."
+      },
+      {
+        question: "Как запросить документы?",
+        answer: "В разделе «Документы» доступны акт сверки и запрос дубликата накладной."
+      },
+      {
+        question: "Как стать партнёром?",
+        answer: "Заполните заявку на сотрудничество и дождитесь её одобрения администратором."
+      },
+      {
+        question: "Как узнать статус заказа?",
+        answer: "Статус отображается в разделе «Заявки»."
+      }
+    ];
 
-  const apiCandidates = [
-    qs.get("api"),
-    localStorage.getItem("raipo_api_base"),
-    BACKEND_URL,
-  ]
-    .filter(Boolean)
-    .map(v => String(v).replace(/\/$/, ""))
-    .filter((v, i, arr) => arr.indexOf(v) === i);
+    const el = {
+      nav: document.getElementById("nav"),
+      toast: document.getElementById("toast"),
+      productModal: document.getElementById("productModal"),
+      sessionPill: document.getElementById("sessionPill"),
+      cartBottom: document.getElementById("cartBottom"),
+      cartSummary: document.getElementById("cartSummary"),
+      goCheckoutBtn: document.getElementById("goCheckoutBtn"),
+      screens: {
+        home: document.getElementById("screen-home"),
+        catalog: document.getElementById("screen-catalog"),
+        cart: document.getElementById("screen-cart"),
+        orders: document.getElementById("screen-orders"),
+        docs: document.getElementById("screen-docs"),
+        admin: document.getElementById("screen-admin")
+      }
+    };
 
-  let API_BASE = apiCandidates[0] || BACKEND_URL;
-  console.log("API_BASE =", API_BASE);
+    const tabsByRole = {
+      guest: [
+        { key: "home", label: "Компания" },
+        { key: "catalog", label: "Ассортимент" },
+        { key: "docs", label: "Сотрудничество" },
+        { key: "admin", label: "Помощь" }
+      ],
+      partner: [
+        { key: "home", label: "Кабинет" },
+        { key: "catalog", label: "Каталог" },
+        { key: "cart", label: "Корзина" },
+        { key: "orders", label: "Заявки" },
+        { key: "docs", label: "Документы" },
+        { key: "admin", label: "Помощь" }
+      ],
+      admin: [
+        { key: "home", label: "Обзор" },
+        { key: "orders", label: "Заявки" },
+        { key: "catalog", label: "Товары" },
+        { key: "cart", label: "Контрагенты" },
+        { key: "docs", label: "Сотрудничество" },
+        { key: "admin", label: "Обращения" }
+      ]
+    };
 
-  if (qs.get("api")) {
-    localStorage.setItem("raipo_api_base", API_BASE);
-  }
+    const API_BASE_URL = "https://sebbikkk-raipo-backend.hf.space";
 
-  const state = {
-    vk_id: Number(qs.get("vk_id")) || null,
-    first_name: null,
-    last_name: null,
-    categories: [],
-    products: [],
-    activeCategoryId: null,
-    query: "",
-    cart: new Map(),
-    selectedProduct: null,
-  };
+    let currentScreen = "home";
 
-  const statusText = {
-    pending: "принят",
-    processing: "в обработке",
-    assembling: "собирается",
-    delivering: "в доставке",
-    completed: "завершён",
-    cancelled: "отменён",
-  };
+    function api(path, options = {}) {
+      const isFormData = options.body instanceof FormData;
+      const headers = isFormData ? (options.headers || {}) : { "Content-Type": "application/json", ...(options.headers || {}) };
+      return fetch(`${API_BASE_URL}${path}`, {
+        ...options,
+        headers
+      }).then(async (response) => {
+        const contentType = response.headers.get("content-type") || "";
+        const body = contentType.includes("application/json") ? await response.json() : await response.text();
+        if (!response.ok) {
+          const message = typeof body === "string" ? body : body.detail || body.message || "Ошибка запроса";
+          throw new Error(message);
+        }
+        return body;
+      });
+    }
 
-  const el = {
-    tabs: Array.from(document.querySelectorAll(".tab")),
-    screens: {
-      catalog: document.getElementById("catalogScreen"),
-      cart: document.getElementById("cartScreen"),
-      checkout: document.getElementById("checkoutScreen"),
-      history: document.getElementById("historyScreen"),
-    },
-    userLine: document.getElementById("userLine"),
-    cartPill: document.getElementById("cartPill"),
-    searchInput: document.getElementById("searchInput"),
-    categoryChips: document.getElementById("categoryChips"),
-    productGrid: document.getElementById("productGrid"),
-    cartList: document.getElementById("cartList"),
-    ordersList: document.getElementById("ordersList"),
-    totalSum: document.getElementById("totalSum"),
-    primaryBtn: document.getElementById("primaryBtn"),
-    clearCartBtn: document.getElementById("clearCartBtn"),
-    deliveryType: document.getElementById("deliveryType"),
-    addressField: document.getElementById("addressField"),
-    addressInput: document.getElementById("addressInput"),
-    phoneInput: document.getElementById("phoneInput"),
-    commentInput: document.getElementById("commentInput"),
-    paymentMethod: document.getElementById("paymentMethod"),
-    submitOrderBtn: document.getElementById("submitOrderBtn"),
-    orderResult: document.getElementById("orderResult"),
-    modal: document.getElementById("productModal"),
-    modalImage: document.getElementById("modalImage"),
-    modalTitle: document.getElementById("modalTitle"),
-    modalDescription: document.getElementById("modalDescription"),
-    modalStock: document.getElementById("modalStock"),
-    modalPrice: document.getElementById("modalPrice"),
-    modalAddBtn: document.getElementById("modalAddBtn"),
-    closeModalBtn: document.getElementById("closeModalBtn"),
-  };
+    function formatMoney(value) {
+      return `${Number(value || 0).toFixed(2)} ₽`;
+    }
 
-  function money(value) {
-    return `${Number(value || 0).toFixed(2)} ₽`;
-  }
+    function showToast(message, isError = false) {
+      el.toast.textContent = message;
+      el.toast.style.background = isError ? "rgba(177, 58, 47, 0.96)" : "rgba(31, 36, 29, 0.96)";
+      el.toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => el.toast.classList.remove("show"), 2600);
+    }
 
-  function toast(message) {
-    try {
-      if (window.vkBridge) {
-        vkBridge.send("VKWebAppShowSnackbar", { text: message });
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function orderStatusLabel(value) {
+      return {
+        new: "Новая",
+        waiting_payment: "Ожидает оплату",
+        payment_check: "Проверка оплаты",
+        confirmed: "Подтверждена",
+        paid: "Оплачена",
+        in_production: "В обработке",
+        shipped: "Отгружена",
+        completed: "Завершена",
+        cancelled: "Отменена",
+        rejected: "Отклонена"
+      }[value] || value || "Не указан";
+    }
+
+    function paymentTypeLabel(value) {
+      return value === "deferred" ? "Отсрочка платежа" : "Предоплата";
+    }
+
+    function displayOrderNumber(order) {
+      if (!order) return "";
+      return order.order_number || (order.id ? `Заказ #${order.id}` : "Заказ");
+    }
+
+    function displayCustomerOrderNumber(order) {
+      const value = Number(order?.customer_order_number || 0);
+      return value > 0 ? `№${value}` : "";
+    }
+
+    function documentTypeLabel(value) {
+      return value === "reconciliation_act" ? "Акт сверки" : value === "duplicate_invoice" ? "Дубликат накладной" : value || "Документ";
+    }
+
+    function documentRequestStatusLabel(value) {
+      return value === "new" ? "Новый" : value === "in_progress" ? "В работе" : value === "done" ? "Выполнен" : value === "rejected" ? "Отклонён" : value || "Не указан";
+    }
+
+    function documentStatusLabel(value) {
+      return value === "active" ? "Доступен" : value || "Документ";
+    }
+
+    function categoryNameById(categoryId) {
+      return (state.categories.find((category) => String(category.id) === String(categoryId)) || {}).name || "Не указана";
+    }
+
+    function buildNav() {
+      const tabs = tabsByRole[state.role] || tabsByRole.guest;
+      if (!tabs.some((tab) => tab.key === currentScreen)) {
+        currentScreen = tabs[0]?.key || "home";
+      }
+      el.nav.innerHTML = tabs.map((tab) => `
+        <button class="${tab.key === currentScreen ? "active" : ""}" data-screen="${tab.key}">${tab.label}</button>
+      `).join("");
+      [...el.nav.querySelectorAll("button")].forEach((button) => {
+        button.addEventListener("click", () => setScreen(button.dataset.screen));
+      });
+    }
+
+    function setScreen(screenKey) {
+      currentScreen = screenKey;
+      Object.entries(el.screens).forEach(([key, node]) => {
+        node.classList.toggle("active", key === screenKey);
+      });
+      buildNav();
+      updateCartBar();
+    }
+
+    function getCartItems() {
+      return Object.values(state.cart);
+    }
+
+    function cartTotal() {
+      return getCartItems().reduce((sum, item) => sum + item.price * item.quantity, 0);
+    }
+
+    function cartCount() {
+      return getCartItems().reduce((sum, item) => sum + item.quantity, 0);
+    }
+
+    function updateCartBar() {
+      const visible = state.role === "partner" && currentScreen !== "cart" && getCartItems().length > 0;
+      el.cartBottom.classList.toggle("visible", visible);
+      el.cartSummary.textContent = `${cartCount()} шт · ${formatMoney(cartTotal())}`;
+    }
+
+    function addToCart(product, quantityOverride = null) {
+      if (state.role !== "partner") {
+        showToast("Добавление в корзину доступно только контрагентам", true);
         return;
       }
-    } catch (error) {}
-    alert(message);
-  }
-
-  async function api(path, options = {}, base = API_BASE) {
-    const response = await fetch(`${base}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-    });
-    if (!response.ok) {
-      let detail = `HTTP ${response.status}`;
-      try {
-        const data = await response.json();
-        detail = data.detail || data.error || detail;
-      } catch (error) {}
-      throw new Error(detail);
+      const existing = state.cart[product.id];
+      const minQuantity = Number(product.min_quantity || 1);
+      const requestedQuantity = Number(quantityOverride || minQuantity);
+      const normalizedQuantity = Math.max(minQuantity, requestedQuantity);
+      const nextQuantity = existing ? existing.quantity + normalizedQuantity : normalizedQuantity;
+      state.cart[product.id] = {
+        product_id: product.id,
+        name: product.name,
+        price: Number(product.price || 0),
+        quantity: nextQuantity,
+        min_quantity: minQuantity,
+        stock_quantity: Number(product.stock_quantity || 0)
+      };
+      renderCart();
+      updateCartBar();
+      showToast(`Добавлено: ${product.name}`);
     }
-    return response.json();
-  }
 
-  async function discoverApiBase() {
-    for (const candidate of apiCandidates) {
-      try {
-        const health = await api("/health", { method: "GET" }, candidate);
-        if (health && health.ok) {
-          API_BASE = candidate;
-          localStorage.setItem("raipo_api_base", API_BASE);
-          return API_BASE;
-        }
-      } catch (error) {}
+    function openProductDetails(productId) {
+      const product = state.products.find((item) => String(item.id) === String(productId));
+      if (!product || state.role === "admin") return;
+      state.selectedProduct = product;
+      state.selectedProductQuantity = Number(product.min_quantity || 1);
+      renderProductModal();
     }
-    throw new Error(`Backend API недоступен. Проверенные адреса: ${apiCandidates.join(", ")}`);
-  }
 
-  function cartKey() {
-    return state.vk_id ? `raipo_cart_${state.vk_id}` : "raipo_cart_guest";
-  }
+    function closeProductDetails() {
+      state.selectedProduct = null;
+      state.selectedProductQuantity = 1;
+      renderProductModal();
+    }
 
-  function loadCart() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(cartKey()) || "[]");
-      state.cart.clear();
-      for (const item of saved) {
-        if (item.product && item.product_id && item.quantity > 0) {
-          state.cart.set(Number(item.product_id), { product: item.product, quantity: Number(item.quantity) });
-        }
+    function changeSelectedProductQuantity(delta) {
+      if (!state.selectedProduct || state.role !== "partner") return;
+      const minQuantity = Number(state.selectedProduct.min_quantity || 1);
+      const stockQuantity = Number(state.selectedProduct.stock_quantity || 0);
+      const nextValue = state.selectedProductQuantity + delta;
+      if (nextValue < minQuantity) {
+        showToast(`Минимальный квант: ${minQuantity}`, true);
+        return;
       }
-    } catch (error) {}
-  }
-
-  function saveCart() {
-    const data = Array.from(state.cart.entries()).map(([product_id, value]) => ({
-      product_id,
-      quantity: value.quantity,
-      product: value.product,
-    }));
-    localStorage.setItem(cartKey(), JSON.stringify(data));
-  }
-
-  function cartTotals() {
-    let count = 0;
-    let total = 0;
-    for (const value of state.cart.values()) {
-      count += value.quantity;
-      total += Number(value.product.price || 0) * value.quantity;
-    }
-    return { count, total };
-  }
-
-  function syncCartUi() {
-    const { count, total } = cartTotals();
-    el.cartPill.textContent = `${count} ${count === 1 ? "товар" : "товаров"}`;
-    el.totalSum.textContent = money(total);
-  }
-
-  function setScreen(name) {
-    el.tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.screen === name));
-    Object.entries(el.screens).forEach(([key, node]) => node.classList.toggle("active", key === name));
-    el.primaryBtn.textContent = name === "catalog" ? "В корзину" : name === "cart" ? "К заказу" : name === "checkout" ? "История" : "Каталог";
-    if (name === "cart") renderCart();
-    if (name === "history") loadOrders();
-  }
-
-  function productImage(product, target) {
-    target.innerHTML = "";
-    if (product.image) {
-      const img = document.createElement("img");
-      img.src = product.image;
-      img.alt = product.name || "Товар";
-      img.loading = "lazy";
-      img.onerror = () => {
-        target.textContent = (product.name || "Р").slice(0, 1).toUpperCase();
-      };
-      target.appendChild(img);
-    } else {
-      target.textContent = (product.name || "Р").slice(0, 1).toUpperCase();
-    }
-  }
-
-  function filteredProducts() {
-    const query = state.query.trim().toLowerCase();
-    return state.products.filter(product => {
-      const matchesCategory = state.activeCategoryId === null || Number(product.category_id) === state.activeCategoryId;
-      const haystack = `${product.name || ""} ${product.description || ""}`.toLowerCase();
-      return matchesCategory && (!query || haystack.includes(query));
-    });
-  }
-
-  function renderCategories() {
-    el.categoryChips.innerHTML = "";
-    const all = document.createElement("button");
-    all.className = `chip${state.activeCategoryId === null ? " active" : ""}`;
-    all.textContent = "Все";
-    all.onclick = () => {
-      state.activeCategoryId = null;
-      renderCategories();
-      renderProducts();
-    };
-    el.categoryChips.appendChild(all);
-
-    for (const category of state.categories) {
-      const chip = document.createElement("button");
-      chip.className = `chip${state.activeCategoryId === Number(category.id) ? " active" : ""}`;
-      chip.textContent = category.name || `Категория ${category.id}`;
-      chip.onclick = () => {
-        state.activeCategoryId = Number(category.id);
-        renderCategories();
-        renderProducts();
-      };
-      el.categoryChips.appendChild(chip);
-    }
-  }
-
-  function renderProducts() {
-    const products = filteredProducts();
-    el.productGrid.innerHTML = "";
-    if (!products.length) {
-      el.productGrid.innerHTML = `<div class="empty">Товары не найдены. Попробуйте изменить поиск или категорию.</div>`;
-      return;
+      if (stockQuantity && nextValue > stockQuantity) {
+        showToast("Недостаточно товара на складе", true);
+        return;
+      }
+      state.selectedProductQuantity = nextValue;
+      renderProductModal();
     }
 
-    for (const product of products) {
-      const card = document.createElement("article");
-      card.className = "product";
+    function renderProductModal() {
+      const product = state.selectedProduct;
+      if (!product || state.role === "admin") {
+        el.productModal.classList.remove("open");
+        el.productModal.innerHTML = "";
+        return;
+      }
 
-      const image = document.createElement("div");
-      image.className = "product-img";
-      productImage(product, image);
-      image.onclick = () => openProduct(product);
+      const canOrder = state.role === "partner";
+      const minQuantity = Number(product.min_quantity || 1);
+      const quantity = Math.max(minQuantity, Number(state.selectedProductQuantity || minQuantity));
+      const categoryName = categoryNameById(product.category_id);
+      const composition = product.composition || "Информация уточняется у менеджера.";
+      const weightInfo = product.weight || product.package_size || product.package || "Уточняется.";
 
-      const body = document.createElement("div");
-      body.className = "product-body";
-      body.innerHTML = `
-        <div class="product-title">${escapeHtml(product.name || `Товар ${product.id}`)}</div>
-        <div class="product-desc">${escapeHtml(product.description || "Описание скоро появится")}</div>
-        <div class="stock">${stockLabel(product)}</div>
-      `;
-
-      const bottom = document.createElement("div");
-      bottom.className = "product-bottom";
-      bottom.innerHTML = `<div class="price">${money(product.price)}</div>`;
-      const add = document.createElement("button");
-      add.className = "btn primary";
-      add.textContent = "Добавить";
-      add.disabled = Number(product.stock_quantity ?? 1) <= 0;
-      add.onclick = () => addToCart(product);
-      bottom.appendChild(add);
-
-      body.appendChild(bottom);
-      card.appendChild(image);
-      card.appendChild(body);
-      card.onclick = event => {
-        if (event.target.tagName !== "BUTTON") openProduct(product);
-      };
-      el.productGrid.appendChild(card);
-    }
-  }
-
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    }[char]));
-  }
-
-  function stockLabel(product) {
-    if (product.stock_quantity === null || product.stock_quantity === undefined) return "Наличие уточняется";
-    const stock = Number(product.stock_quantity);
-    if (stock <= 0) return "Нет в наличии";
-    if (stock <= 5) return `Осталось ${stock}`;
-    return "В наличии";
-  }
-
-  function addToCart(product) {
-    if (Number(product.stock_quantity ?? 1) <= 0) {
-      toast("Товара нет в наличии");
-      return;
-    }
-    const id = Number(product.id);
-    const current = state.cart.get(id);
-    const nextQuantity = (current ? current.quantity : 0) + 1;
-    if (product.stock_quantity !== null && product.stock_quantity !== undefined && nextQuantity > Number(product.stock_quantity)) {
-      toast("Больше товара на складе нет");
-      return;
-    }
-    state.cart.set(id, { product, quantity: nextQuantity });
-    saveCart();
-    syncCartUi();
-    renderCart();
-    toast("Добавлено в корзину");
-  }
-
-  function setQuantity(productId, quantity) {
-    const current = state.cart.get(Number(productId));
-    if (!current) return;
-    const next = Math.max(0, Math.min(999, Number(quantity)));
-    if (next === 0) {
-      state.cart.delete(Number(productId));
-    } else {
-      state.cart.set(Number(productId), { product: current.product, quantity: next });
-    }
-    saveCart();
-    syncCartUi();
-    renderCart();
-  }
-
-  function renderCart() {
-    el.cartList.innerHTML = "";
-    const entries = Array.from(state.cart.entries());
-    if (!entries.length) {
-      el.cartList.innerHTML = `<div class="empty">Корзина пустая. Добавьте товары из каталога.</div>`;
-      return;
-    }
-
-    for (const [productId, item] of entries) {
-      const line = document.createElement("div");
-      line.className = "line";
-      line.innerHTML = `
-        <div>
-          <div class="line-title">${escapeHtml(item.product.name || `Товар ${productId}`)}</div>
-          <div class="line-sub">${money(item.product.price)} × ${item.quantity} = ${money(Number(item.product.price || 0) * item.quantity)}</div>
+      el.productModal.innerHTML = `
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="Карточка товара">
+          <div class="modal-close-row">
+            <button class="modal-close" id="closeProductModalBtn" aria-label="Закрыть">×</button>
+          </div>
+          <div class="product-modal-layout">
+            <div class="product-modal-visual">
+              ${product.image ? `<img src="${product.image}" alt="${escapeHtml(product.name || "")}">` : `<span>${escapeHtml(String(product.name || "Т").slice(0, 1))}</span>`}
+            </div>
+            <div>
+              <h2 class="product-modal-title">${product.name}</h2>
+              <p class="muted" style="margin-top: 10px;">${product.description || "Подробное описание товара уточняется у менеджера."}</p>
+              <div class="product-modal-meta">
+                <div class="product-modal-meta-item"><span>Состав</span><strong>${composition}</strong></div>
+                <div class="product-modal-meta-item"><span>Вес / фасовка</span><strong>${weightInfo}</strong></div>
+                <div class="product-modal-meta-item"><span>Категория</span><strong>${categoryName}</strong></div>
+                <div class="product-modal-meta-item"><span>Минимальная партия</span><strong>${minQuantity} шт.</strong></div>
+                <div class="product-modal-meta-item"><span>Остаток</span><strong>${Number(product.stock_quantity || 0)} шт.</strong></div>
+                <div class="product-modal-meta-item"><span>Цена</span><strong>${formatMoney(product.price)}</strong></div>
+              </div>
+              <div class="product-modal-actions">
+                ${canOrder ? `
+                  <div class="product-modal-qty">
+                    <button class="icon-btn" id="productQtyDec" type="button">−</button>
+                    <strong>${quantity} шт.</strong>
+                    <button class="icon-btn" id="productQtyInc" type="button">+</button>
+                  </div>
+                  <button class="btn primary full" id="productAddToCartBtn" type="button">Добавить в корзину</button>
+                ` : `<div class="notice">Для оформления заявки войдите по договору.</div>`}
+              </div>
+            </div>
+          </div>
         </div>
       `;
-      const qty = document.createElement("div");
-      qty.className = "qty";
-      qty.innerHTML = `
-        <button class="icon-btn" aria-label="Уменьшить">−</button>
-        <div class="qty-value">${item.quantity}</div>
-        <button class="icon-btn" aria-label="Увеличить">+</button>
-        <button class="icon-btn" aria-label="Удалить">×</button>
-      `;
-      const buttons = qty.querySelectorAll("button");
-      buttons[0].onclick = () => setQuantity(productId, item.quantity - 1);
-      buttons[1].onclick = () => setQuantity(productId, item.quantity + 1);
-      buttons[2].onclick = () => setQuantity(productId, 0);
-      line.appendChild(qty);
-      el.cartList.appendChild(line);
-    }
-  }
+      el.productModal.classList.add("open");
 
-  function clearCart() {
-    state.cart.clear();
-    saveCart();
-    syncCartUi();
-    renderCart();
-  }
-
-  function openProduct(product) {
-    state.selectedProduct = product;
-    productImage(product, el.modalImage);
-    el.modalTitle.textContent = product.name || `Товар ${product.id}`;
-    el.modalDescription.textContent = product.description || "Описание скоро появится";
-    el.modalStock.textContent = stockLabel(product);
-    el.modalPrice.textContent = money(product.price);
-    el.modalAddBtn.disabled = Number(product.stock_quantity ?? 1) <= 0;
-    el.modal.classList.add("active");
-  }
-
-  function closeProduct() {
-    el.modal.classList.remove("active");
-    state.selectedProduct = null;
-  }
-
-  async function submitOrder() {
-    const totals = cartTotals();
-    if (totals.count === 0) {
-      toast("Корзина пуста");
-      setScreen("catalog");
-      return;
-    }
-    if (!state.vk_id) {
-      toast("Не удалось получить VK ID. Откройте приложение внутри VK или добавьте ?vk_id=1 для локальной проверки.");
-      return;
-    }
-    if (el.deliveryType.value === "delivery" && !el.addressInput.value.trim()) {
-      toast("Введите адрес доставки");
-      return;
-    }
-
-    const paymentMethod = el.paymentMethod.value;
-    const payload = {
-      vk_id: Number(state.vk_id),
-      first_name: state.first_name,
-      last_name: state.last_name,
-      phone: el.phoneInput.value.trim() || null,
-      items: Array.from(state.cart.entries()).map(([product_id, item]) => ({
-        product_id: Number(product_id),
-        quantity: item.quantity,
-      })),
-      delivery_type: el.deliveryType.value,
-      address: el.deliveryType.value === "pickup" ? "" : el.addressInput.value.trim(),
-      comment: el.commentInput.value.trim() || null,
-      payment_method: paymentMethod,
-      pay_now: paymentMethod !== "cash",
-    };
-
-    el.submitOrderBtn.disabled = true;
-    el.submitOrderBtn.textContent = paymentMethod === "cash" ? "Создаём заказ..." : "Имитируем оплату...";
-    try {
-      const order = await api("/orders", { method: "POST", body: JSON.stringify(payload) });
-      el.orderResult.classList.remove("hidden");
-      el.orderResult.innerHTML = `
-        Заказ <b>#${order.order_id}</b> создан.<br>
-        Статус оплаты: <b>${order.payment_status}</b>.<br>
-        Итог: <b>${money(order.total_amount)}</b>.
-      `;
-      clearCart();
-      await loadOrders();
-      toast(paymentMethod === "cash" ? "Заказ создан" : "Оплата успешно имитирована");
-      try { await vkBridge.send("VKWebAppTapticNotificationOccurred", { type: "success" }); } catch (error) {}
-    } catch (error) {
-      toast(error.message || "Не удалось создать заказ");
-    } finally {
-      el.submitOrderBtn.disabled = false;
-      updateSubmitText();
-    }
-  }
-
-  function updateSubmitText() {
-    el.submitOrderBtn.textContent = el.paymentMethod.value === "cash" ? "Оформить заказ" : "Оплатить и оформить";
-  }
-
-  async function loadOrders() {
-    if (!state.vk_id) {
-      el.ordersList.innerHTML = `<div class="empty">История появится после запуска приложения внутри VK.</div>`;
-      return;
-    }
-    try {
-      const orders = await api(`/orders/${state.vk_id}`);
-      renderOrders(orders);
-    } catch (error) {
-      el.ordersList.innerHTML = `<div class="empty">Не удалось загрузить историю заказов.</div>`;
-    }
-  }
-
-  function renderOrders(orders) {
-    el.ordersList.innerHTML = "";
-    if (!orders.length) {
-      el.ordersList.innerHTML = `<div class="empty">Заказов пока нет.</div>`;
-      return;
-    }
-    for (const order of orders) {
-      const node = document.createElement("article");
-      node.className = "order";
-      const items = (order.items || []).map(item => `${escapeHtml(item.name)} × ${item.quantity}`).join("<br>");
-      node.innerHTML = `
-        <div class="order-head">
-          <div>Заказ #${order.id}</div>
-          <div class="badge">${statusText[order.status] || order.status || "статус"}</div>
-        </div>
-        <div class="line-sub">${String(order.created_at || "").slice(0, 16)} · ${money(order.total_amount)} · ${order.payment_status || "unpaid"}</div>
-        <div class="line-sub" style="margin-top:8px">${items || "Состав не указан"}</div>
-      `;
-      el.ordersList.appendChild(node);
-    }
-  }
-
-  async function initVk() {
-    try {
-      if (window.vkBridge) {
-        await vkBridge.send("VKWebAppInit");
-        const user = await vkBridge.send("VKWebAppGetUserInfo");
-        state.vk_id = user.id;
-        state.first_name = user.first_name || null;
-        state.last_name = user.last_name || null;
-        el.userLine.textContent = `${user.first_name || "Покупатель"} · VK ID ${user.id}`;
+      document.getElementById("closeProductModalBtn")?.addEventListener("click", closeProductDetails);
+      if (canOrder) {
+        document.getElementById("productQtyDec")?.addEventListener("click", () => changeSelectedProductQuantity(-minQuantity));
+        document.getElementById("productQtyInc")?.addEventListener("click", () => changeSelectedProductQuantity(minQuantity));
+        document.getElementById("productAddToCartBtn")?.addEventListener("click", () => {
+          addToCart(product, quantity);
+          closeProductDetails();
+        });
       }
-    } catch (error) {
-      if (state.vk_id) {
-        el.userLine.textContent = `Локальная проверка · VK ID ${state.vk_id}`;
+    }
+
+    function setCartQuantity(productId, quantity) {
+      const item = state.cart[productId];
+      if (!item) return;
+      if (quantity <= 0) {
+        delete state.cart[productId];
       } else {
-        el.userLine.textContent = "Откройте внутри VK для оформления заказов";
+        if (quantity < item.min_quantity) {
+          showToast(`Минимальный квант: ${item.min_quantity}`, true);
+          return;
+        }
+        if (item.stock_quantity && quantity > item.stock_quantity) {
+          showToast("Недостаточно товара на складе", true);
+          return;
+        }
+        item.quantity = quantity;
+      }
+      renderCart();
+      updateCartBar();
+    }
+
+    function sessionCardText() {
+      if (state.role === "admin") {
+        return {
+          title: "Администратор",
+          body: "Управление заявками, контрагентами и статистикой"
+        };
+      }
+      if (state.role === "partner") {
+        return {
+          title: state.contractor?.company_name || "Контрагент",
+          body: `${paymentTypeLabel(state.contractor?.payment_type)} · договор ${state.contractor?.contract_number || "не указан"}`
+        };
+      }
+      return {
+        title: "Гость",
+        body: "Ознакомление с ассортиментом и заявка на сотрудничество"
+      };
+    }
+
+    function renderSessionPill() {
+      const card = sessionCardText();
+      el.sessionPill.innerHTML = `<strong>${card.title}</strong><div>${card.body}</div>`;
+    }
+
+    function adminStatusBadgeClass(status) {
+      if (["waiting_payment", "payment_check"].includes(status)) return "badge warn";
+      if (["cancelled", "rejected", "blocked"].includes(status)) return "badge danger";
+      return "badge";
+    }
+
+    function formatDate(value) {
+      if (!value) return "Дата не указана";
+      return String(value).slice(0, 16).replace("T", " ");
+    }
+
+    function getAdminOverviewMetrics() {
+      const orders = state.admin.orders || [];
+      const contractors = state.admin.contractors || [];
+      return {
+        newOrders: orders.filter((order) => order.status === "new").length,
+        inWork: orders.filter((order) => ["confirmed", "paid", "in_production"].includes(order.status)).length,
+        waitingPayment: orders.filter((order) => ["waiting_payment", "payment_check"].includes(order.status)).length,
+        totalAmount: orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+        overdue: Number(state.admin.stats?.overdue_orders || 0),
+        activeContractors: contractors.filter((contractor) => contractor.status === "active").length
+      };
+    }
+
+    function renderAdminOverview() {
+      const metrics = getAdminOverviewMetrics();
+      const recentOrders = (state.admin.orders || []).slice(0, 6);
+      const recentLeads = (state.admin.leads || []).slice(0, 4);
+      return `
+        <div class="admin-stack">
+          <div class="card admin-header">
+            <div>
+              <h2 class="section-title">Панель управления</h2>
+              <p class="muted">Ключевые показатели по заявкам, оплатам, контрагентам и новым обращениям.</p>
+            </div>
+            <div class="admin-kpi-grid">
+              <div class="admin-kpi"><span>Новые заявки</span><strong>${metrics.newOrders}</strong><small>Ожидают первичной обработки</small></div>
+              <div class="admin-kpi"><span>В работе</span><strong>${metrics.inWork}</strong><small>Подтверждены или запущены в работу</small></div>
+              <div class="admin-kpi"><span>Ожидают оплату</span><strong>${metrics.waitingPayment}</strong><small>Требуют подтверждения оплаты</small></div>
+              <div class="admin-kpi"><span>Активные контрагенты</span><strong>${metrics.activeContractors}</strong><small>Доступ к личному кабинету открыт</small></div>
+              <div class="admin-kpi"><span>Сумма заявок</span><strong>${formatMoney(metrics.totalAmount)}</strong><small>По текущей выборке заказов</small></div>
+              <div class="admin-kpi"><span>Просроченные оплаты</span><strong>${metrics.overdue}</strong><small>Заявки с истекшим сроком оплаты</small></div>
+            </div>
+          </div>
+          <div class="admin-two-col">
+            <div class="card">
+              <div class="toolbar-row">
+                <div>
+                  <h3 class="section-title">Последние заявки</h3>
+                  <p class="muted">Быстрый обзор свежих действий по заказам.</p>
+                </div>
+              </div>
+              <div class="admin-recent-list">
+                ${recentOrders.length ? recentOrders.map((order) => `
+                  <div class="admin-recent-item">
+                    <div class="admin-card-header">
+                      <div>
+                        <div class="admin-card-title">${displayOrderNumber(order)} · ${order.contractor?.company_name || "Контрагент"}</div>
+                        <div class="admin-card-meta">${paymentTypeLabel(order.payment_type)} · ${formatMoney(order.total_amount)} · ${formatDate(order.created_at)}</div>
+                      </div>
+                      <span class="${adminStatusBadgeClass(order.status)}">${order.status_label || orderStatusLabel(order.status)}</span>
+                    </div>
+                  </div>
+                `).join("") : `<div class="admin-empty">Заявок пока нет.</div>`}
+              </div>
+            </div>
+            <div class="card">
+              <div class="toolbar-row">
+                <div>
+                  <h3 class="section-title">Новые обращения</h3>
+                  <p class="muted">Последние заявки на сотрудничество.</p>
+                </div>
+              </div>
+              <div class="admin-recent-list">
+                ${recentLeads.length ? recentLeads.map((lead) => `
+                  <div class="admin-recent-item">
+                    <div class="admin-card-title">${lead.company_name}</div>
+                    <div class="admin-card-meta">ИНН: ${lead.inn} · ${lead.phone}</div>
+                    <div class="admin-card-meta">${lead.city} · ${lead.status === "done" ? "Одобрено" : "На рассмотрении"}</div>
+                  </div>
+                `).join("") : `<div class="admin-empty">Новых заявок на сотрудничество нет.</div>`}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminOrdersSection() {
+      const statusFilter = state.adminUi.orderStatus;
+      const searchFilter = state.adminUi.orderSearch.trim().toLowerCase();
+      const filteredOrders = (state.admin.orders || []).filter((order) => {
+        const matchesStatus = !statusFilter || order.status === statusFilter;
+        const haystack = [
+          order.id,
+          order.contractor?.company_name,
+          order.contractor?.contract_number,
+          order.comment
+        ].join(" ").toLowerCase();
+        const matchesSearch = !searchFilter || haystack.includes(searchFilter);
+        return matchesStatus && matchesSearch;
+      });
+
+      return `
+        <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Заявки</h2>
+                <p class="muted">Обработка заказов, подтверждение оплат и контроль статусов.</p>
+              </div>
+            </div>
+            <div class="admin-toolbar">
+              <div class="search">
+                <span>Поиск</span>
+                <input id="adminOrderSearch" placeholder="Номер заявки, организация или комментарий" value="${escapeHtml(state.adminUi.orderSearch)}">
+              </div>
+              <select id="adminOrderStatusFilter">
+                <option value="">Все статусы</option>
+                ${["new","waiting_payment","payment_check","confirmed","paid","in_production","shipped","completed","cancelled","rejected"].map((status) => `
+                  <option value="${status}" ${statusFilter === status ? "selected" : ""}>${orderStatusLabel(status)}</option>
+                `).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${filteredOrders.length ? filteredOrders.map((order) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${displayOrderNumber(order)} · ${order.contractor?.company_name || "Контрагент"}</div>
+                    <div class="admin-card-meta">
+                      ${formatDate(order.created_at)} · ${paymentTypeLabel(order.payment_type)} · ${formatMoney(order.total_amount)}
+                      ${order.contractor?.contract_number ? ` · Договор ${order.contractor.contract_number}` : ""}
+                    </div>
+                    <div class="admin-card-meta">Номер у клиента: ${displayCustomerOrderNumber(order) || "не указан"}</div>
+                    <div class="admin-card-meta">${order.comment || "Комментарий не указан"}</div>
+                  </div>
+                  <span class="${adminStatusBadgeClass(order.status)}">${order.status_label || orderStatusLabel(order.status)}</span>
+                </div>
+                <div class="action-row" style="margin-top: 14px;">
+                  <select data-order-status="${order.id}">
+                    ${["new","waiting_payment","payment_check","confirmed","paid","in_production","shipped","completed","cancelled","rejected"].map((status) => `
+                      <option value="${status}" ${order.status === status ? "selected" : ""}>${orderStatusLabel(status)}</option>
+                    `).join("")}
+                  </select>
+                  <button class="btn primary" data-save-order="${order.id}">Сохранить статус</button>
+                  ${order.invoice_pdf_url ? `<a class="btn soft" href="${order.invoice_pdf_url}" target="_blank" rel="noreferrer">PDF-счёт</a>` : ""}
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">По текущим фильтрам заявки не найдены.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminProductsSection() {
+      const searchValue = state.adminUi.productSearch.trim().toLowerCase();
+      const categoryFilter = state.adminUi.productCategory;
+      const filteredProducts = (state.products || []).filter((product) => {
+        const matchesSearch = !searchValue || [product.name, product.description].join(" ").toLowerCase().includes(searchValue);
+        const matchesCategory = !categoryFilter || String(product.category_id) === String(categoryFilter);
+        return matchesSearch && matchesCategory;
+      });
+
+      return `
+        <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Товары</h2>
+                <p class="muted">Управление ассортиментом, остатками, ценами и минимальным количеством отгрузки.</p>
+              </div>
+            </div>
+            <form class="form" id="createProductForm">
+              <div class="form-grid">
+                <div class="field"><label>Название</label><input id="newProductName" required></div>
+                <div class="field"><label>Цена</label><input id="newProductPrice" type="number" min="0" step="0.01" required></div>
+                <div class="field"><label>Мин. квант</label><input id="newProductMinQty" type="number" min="1" value="1" required></div>
+                <div class="field"><label>Остаток</label><input id="newProductStock" type="number" min="0" value="0" required></div>
+                <div class="field"><label>Категория</label>
+                  <select id="newProductCategory" required>
+                    <option value="">Выберите категорию</option>
+                    ${state.categories.map((category) => `<option value="${category.id}">${category.name}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="field"><label>Изображение</label><input id="newProductImage" placeholder="https://..."></div>
+              </div>
+              <div class="field"><label>Описание</label><textarea id="newProductDescription"></textarea></div>
+              <button class="btn primary" type="submit">Добавить товар</button>
+            </form>
+          </div>
+          <div class="card">
+            <div class="admin-toolbar compact">
+              <div class="search">
+                <span>Поиск</span>
+                <input id="adminProductSearch" placeholder="Название или описание" value="${escapeHtml(state.adminUi.productSearch)}">
+              </div>
+              <select id="adminProductCategoryFilter">
+                <option value="">Все категории</option>
+                ${state.categories.map((category) => `<option value="${category.id}" ${String(state.adminUi.productCategory) === String(category.id) ? "selected" : ""}>${category.name}</option>`).join("")}
+              </select>
+              <div class="meta">Найдено товаров: ${filteredProducts.length}</div>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${filteredProducts.length ? filteredProducts.map((product) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div style="display:flex; gap:12px; align-items:flex-start;">
+                    ${product.image ? `<img class="thumb" src="${product.image}" alt="${escapeHtml(product.name || "")}">` : `<div class="thumb-placeholder">${escapeHtml(String(product.name || "Т").slice(0, 1))}</div>`}
+                    <div>
+                      <div class="admin-card-title">${product.name}</div>
+                      <div class="admin-card-meta">Категория: ${(state.categories.find((item) => String(item.id) === String(product.category_id)) || {}).name || "Не указана"}</div>
+                    </div>
+                  </div>
+                  <span class="badge">${formatMoney(product.price)}</span>
+                </div>
+                <div class="form-grid" style="margin-top: 14px;">
+                  <div class="field"><label>Название</label><input data-product-name="${product.id}" value="${escapeHtml(product.name || "")}"></div>
+                  <div class="field"><label>Цена</label><input data-product-price="${product.id}" type="number" min="0" step="0.01" value="${Number(product.price || 0)}"></div>
+                  <div class="field"><label>Мин. квант</label><input data-product-min="${product.id}" type="number" min="1" value="${Number(product.min_quantity || 1)}"></div>
+                  <div class="field"><label>Остаток</label><input data-product-stock="${product.id}" type="number" min="0" value="${Number(product.stock_quantity || 0)}"></div>
+                  <div class="field"><label>Категория</label>
+                    <select data-product-category="${product.id}">
+                      ${state.categories.map((category) => `<option value="${category.id}" ${String(category.id) === String(product.category_id) ? "selected" : ""}>${category.name}</option>`).join("")}
+                    </select>
+                  </div>
+                  <div class="field"><label>Изображение</label><input data-product-image="${product.id}" value="${escapeHtml(product.image || "")}"></div>
+                </div>
+                <div class="field" style="margin-top: 12px;"><label>Описание</label><textarea data-product-description="${product.id}">${escapeHtml(product.description || "")}</textarea></div>
+                <div class="action-row" style="margin-top: 12px;">
+                  <button class="btn soft" data-save-product="${product.id}">Сохранить товар</button>
+                  <button class="btn danger" data-delete-product="${product.id}">Удалить товар</button>
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Товары по текущим фильтрам не найдены.</div>`}
+          </div>
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h3 class="section-title">Категории</h3>
+                <p class="muted">Справочник категорий для каталога.</p>
+              </div>
+            </div>
+            <form class="action-row" id="createCategoryForm">
+              <input id="newCategoryName" placeholder="Новая категория" required>
+              <button class="btn primary" type="submit">Добавить категорию</button>
+            </form>
+            <div class="admin-list" style="margin-top: 14px;">
+              ${(state.categories || []).map((category) => `
+                <div class="admin-card">
+                  <div class="action-row">
+                    <input data-category-name="${category.id}" value="${escapeHtml(category.name || "")}">
+                    <button class="btn soft" data-save-category="${category.id}">Сохранить</button>
+                    <button class="btn danger" data-delete-category="${category.id}">Удалить</button>
+                  </div>
+                </div>
+              `).join("") || `<div class="admin-empty">Категорий пока нет.</div>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminContractorsSection() {
+      const searchValue = state.adminUi.contractorSearch.trim().toLowerCase();
+      const filtered = (state.admin.contractors || []).filter((contractor) => {
+        const haystack = [contractor.company_name, contractor.inn, contractor.contract_number].join(" ").toLowerCase();
+        return !searchValue || haystack.includes(searchValue);
+      });
+
+      return `
+        <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Контрагенты</h2>
+                <p class="muted">Договоры, лимиты, статусы и параметры отсрочки платежа.</p>
+              </div>
+            </div>
+            <div class="search">
+              <span>Поиск</span>
+              <input id="adminContractorSearch" placeholder="Организация, ИНН или номер договора" value="${escapeHtml(state.adminUi.contractorSearch)}">
+            </div>
+          </div>
+          <div class="admin-list">
+            ${filtered.length ? filtered.map((contractor) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${contractor.company_name}</div>
+                    <div class="admin-card-meta">ИНН: ${contractor.inn || "—"} · Договор: ${contractor.contract_number || "—"}</div>
+                    <div class="admin-card-meta">Задолженность: ${formatMoney(contractor.current_debt)} · Лимит: ${formatMoney(contractor.credit_limit)}</div>
+                  </div>
+                  <span class="${adminStatusBadgeClass(contractor.status)}">${contractor.status_label || contractor.status || "—"}</span>
+                </div>
+                <div class="form-grid" style="margin-top: 14px;">
+                  <div class="field">
+                    <label>Тип оплаты</label>
+                    <select data-contractor-payment-type="${contractor.id}">
+                      <option value="prepayment" ${contractor.payment_type === "prepayment" ? "selected" : ""}>Предоплата</option>
+                      <option value="deferred" ${contractor.payment_type === "deferred" ? "selected" : ""}>Отсрочка платежа</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Кредитный лимит</label>
+                    <input data-contractor-credit-limit="${contractor.id}" type="number" min="0" step="0.01" value="${Number(contractor.credit_limit || 0)}">
+                  </div>
+                  <div class="field">
+                    <label>Дней отсрочки</label>
+                    <input data-contractor-payment-days="${contractor.id}" type="number" min="0" value="${Number(contractor.payment_days || 0)}">
+                  </div>
+                  <div class="field">
+                    <label>Статус</label>
+                    <select data-contractor-status="${contractor.id}">
+                      <option value="active" ${contractor.status === "active" ? "selected" : ""}>Активен</option>
+                      <option value="blocked" ${contractor.status === "blocked" ? "selected" : ""}>Заблокирован</option>
+                      <option value="new_request" ${contractor.status === "new_request" ? "selected" : ""}>Новая заявка</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="action-row" style="margin-top: 12px;">
+                  <button class="btn primary" data-save-contractor="${contractor.id}">Сохранить условия</button>
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Контрагенты не найдены.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminLeadsSection() {
+      const searchValue = state.adminUi.leadSearch.trim().toLowerCase();
+      const filtered = (state.admin.leads || []).filter((lead) => {
+        const haystack = [lead.company_name, lead.inn, lead.contact_name, lead.phone, lead.city].join(" ").toLowerCase();
+        return !searchValue || haystack.includes(searchValue);
+      });
+
+      return `
+        <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Сотрудничество</h2>
+                <p class="muted">Заявки на подключение организаций и их перевод в статус контрагентов.</p>
+              </div>
+              <button class="btn soft" id="runRemindersBtn">Запустить напоминания</button>
+            </div>
+            <div class="search">
+              <span>Поиск</span>
+              <input id="adminLeadSearch" placeholder="Организация, ИНН, контакт или город" value="${escapeHtml(state.adminUi.leadSearch)}">
+            </div>
+          </div>
+          <div class="admin-list">
+            ${filtered.length ? filtered.map((lead) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${lead.company_name}</div>
+                    <div class="admin-card-meta">ИНН: ${lead.inn} · ${lead.city}</div>
+                    <div class="admin-card-meta">Контакт: ${lead.contact_name} · ${lead.phone}</div>
+                    <div class="admin-card-meta">${formatDate(lead.created_at)}</div>
+                  </div>
+                  <span class="${lead.status === "done" ? "badge" : "badge warn"}">${lead.status === "done" ? "Одобрено" : "На рассмотрении"}</span>
+                </div>
+                <div class="action-row" style="margin-top: 14px;">
+                  ${lead.status === "done"
+                    ? `<span class="badge">Контрагент создан</span>`
+                    : `<button class="btn primary" data-approve-lead="${lead.id}">Одобрить</button>`}
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Заявки на сотрудничество не найдены.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHelpSection() {
+      return `
+        <div class="split">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Помощь</h2>
+                <p class="muted">Частые вопросы по работе с системой, оформлению заявок и документам.</p>
+              </div>
+            </div>
+            <div class="faq-list">
+              ${FAQ_ITEMS.map((item, index) => `
+                <div class="faq-item" data-faq-item="${index}">
+                  <button class="faq-question" data-faq-toggle="${index}">
+                    <span>${item.question}</span>
+                    <span>+</span>
+                  </button>
+                  <div class="faq-answer">${item.answer}</div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Задать вопрос менеджеру</h2>
+            <p class="muted">Если ответ не найден в справке, отправьте обращение менеджеру.</p>
+            <form class="form" id="supportForm">
+              <div class="field">
+                <label>Тема вопроса</label>
+                <input id="supportSubject" placeholder="Например, Счёт по заказу" required>
+              </div>
+              <div class="field">
+                <label>Сообщение</label>
+                <textarea id="supportMessage" placeholder="Опишите вопрос подробнее" required></textarea>
+              </div>
+              <button class="btn primary" type="submit">Отправить</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAdminSupportSection() {
+      const statusFilter = state.adminUi.supportStatus;
+      const searchValue = state.adminUi.supportSearch.trim().toLowerCase();
+      const filtered = (state.admin.supportRequests || []).filter((item) => {
+        const matchesStatus = !statusFilter || item.status === statusFilter;
+        const haystack = [item.subject, item.message, item.vk_id].join(" ").toLowerCase();
+        const matchesSearch = !searchValue || haystack.includes(searchValue);
+        return matchesStatus && matchesSearch;
+      });
+      const documentRequests = state.admin.documentRequests || [];
+      const adminDocuments = state.admin.documents || [];
+
+      return `
+        <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Обращения</h2>
+                <p class="muted">Регистрация и обработка вопросов пользователей по работе с системой.</p>
+              </div>
+            </div>
+            <div class="admin-toolbar">
+              <div class="search">
+                <span>Поиск</span>
+                <input id="adminSupportSearch" placeholder="Тема, текст или VK ID" value="${escapeHtml(state.adminUi.supportSearch)}">
+              </div>
+              <select id="adminSupportStatusFilter">
+                <option value="">Все статусы</option>
+                <option value="new" ${statusFilter === "new" ? "selected" : ""}>Новые</option>
+                <option value="in_progress" ${statusFilter === "in_progress" ? "selected" : ""}>В работе</option>
+                <option value="closed" ${statusFilter === "closed" ? "selected" : ""}>Закрытые</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${filtered.length ? filtered.map((item) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${item.subject}</div>
+                    <div class="admin-card-meta">VK ID: ${item.vk_id} · ${formatDate(item.created_at)}</div>
+                    <div class="admin-card-meta">${item.message}</div>
+                  </div>
+                  <span class="${adminStatusBadgeClass(item.status)}">${item.status === "new" ? "Новое" : item.status === "in_progress" ? "В работе" : "Закрыто"}</span>
+                </div>
+                <div class="action-row" style="margin-top: 12px;">
+                  <select data-support-status="${item.id}">
+                    <option value="new" ${item.status === "new" ? "selected" : ""}>Новое</option>
+                    <option value="in_progress" ${item.status === "in_progress" ? "selected" : ""}>В работе</option>
+                    <option value="closed" ${item.status === "closed" ? "selected" : ""}>Закрыто</option>
+                  </select>
+                  <button class="btn primary" data-save-support="${item.id}">Сохранить статус</button>
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Обращения не найдены.</div>`}
+          </div>
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Запросы документов</h2>
+                <p class="muted">Запросы на акты сверки и дубликаты накладных, зарегистрированные в системе.</p>
+              </div>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${documentRequests.length ? documentRequests.map((item) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${documentTypeLabel(item.document_type)}</div>
+                    <div class="admin-card-meta">${item.contractor?.company_name || "Контрагент"} · ${item.contractor?.contract_number || "без договора"}</div>
+                    <div class="admin-card-meta">${item.order ? `${displayOrderNumber(item.order)} · ${displayCustomerOrderNumber(item.order) || "без локального номера"}` : "Без привязки к заказу"}</div>
+                    <div class="admin-card-meta">${formatDate(item.created_at)}</div>
+                  </div>
+                  <span class="${adminStatusBadgeClass(item.status)}">${documentRequestStatusLabel(item.status)}</span>
+                </div>
+                <div class="action-row" style="margin-top: 12px;">
+                  <select data-document-request-status="${item.id}">
+                    ${["new","in_progress","done","rejected"].map((status) => `<option value="${status}" ${item.status === status ? "selected" : ""}>${documentRequestStatusLabel(status)}</option>`).join("")}
+                  </select>
+                  <button class="btn primary" data-save-document-request="${item.id}">Сохранить статус</button>
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Запросы документов не найдены.</div>`}
+          </div>
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Документы</h2>
+                <p class="muted">Загрузка документов для контрагентов и привязка к заявкам или запросам документов.</p>
+              </div>
+            </div>
+            <form class="form" id="adminDocumentUploadForm">
+              <div class="form-grid">
+                <div class="field">
+                  <label>Контрагент</label>
+                  <select id="adminDocumentContractor" required>
+                    <option value="">Выберите контрагента</option>
+                    ${(state.admin.contractors || []).map((item) => `<option value="${item.id}">${item.company_name}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Тип документа</label>
+                  <select id="adminDocumentType" required>
+                    <option value="invoice">Счёт</option>
+                    <option value="waybill">Накладная</option>
+                    <option value="contract">Договор</option>
+                    <option value="reconciliation_act">Акт сверки</option>
+                    <option value="other">Документ</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Заявка</label>
+                  <select id="adminDocumentOrder">
+                    <option value="">Без привязки к заявке</option>
+                    ${(state.admin.orders || []).map((item) => `<option value="${item.id}">${displayOrderNumber(item)} · ${item.contractor?.company_name || "Контрагент"}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Запрос документа</label>
+                  <select id="adminDocumentRequest">
+                    <option value="">Без привязки к запросу</option>
+                    ${documentRequests.filter((item) => item.status !== "done").map((item) => `<option value="${item.id}">${documentTypeLabel(item.document_type)} · ${item.contractor?.company_name || "Контрагент"}</option>`).join("")}
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label>Название</label>
+                <input id="adminDocumentTitle" placeholder="Например, Накладная по заявке ORD-2026-0001" required>
+              </div>
+              <div class="field">
+                <label>Файл</label>
+                <input id="adminDocumentFile" type="file" required>
+              </div>
+              <button class="btn primary" type="submit">Загрузить</button>
+            </form>
+          </div>
+          <div class="admin-list">
+            ${adminDocuments.length ? adminDocuments.map((item) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${item.title || documentTypeLabel(item.document_type)}</div>
+                    <div class="admin-card-meta">${item.contractor?.company_name || "Контрагент"} · ${documentTypeLabel(item.document_type)}</div>
+                    <div class="admin-card-meta">${item.order ? `${displayOrderNumber(item.order)} · ${displayCustomerOrderNumber(item.order) || "без локального номера"}` : "Без привязки к заявке"}</div>
+                    <div class="admin-card-meta">${formatDate(item.uploaded_at)} · ${documentStatusLabel(item.status)}</div>
+                  </div>
+                  <a class="btn soft" href="${item.file_url}" target="_blank" rel="noreferrer">Скачать</a>
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Документы пока не загружены.</div>`}
+          </div>
+        </div>
+      `;
+    }
+
+    function attachHelpEvents() {
+      [...el.screens.admin.querySelectorAll("[data-faq-toggle]")].forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = button.closest("[data-faq-item]");
+          if (!item) return;
+          item.classList.toggle("open");
+          const indicator = button.querySelector("span:last-child");
+          if (indicator) {
+            indicator.textContent = item.classList.contains("open") ? "−" : "+";
+          }
+        });
+      });
+      document.getElementById("supportForm")?.addEventListener("submit", submitSupportRequest);
+    }
+
+    function attachAdminOverviewEvents() {}
+
+    function attachAdminOrdersEvents() {
+      document.getElementById("adminOrderSearch")?.addEventListener("input", (event) => {
+        state.adminUi.orderSearch = event.target.value;
+        renderOrders();
+      });
+      document.getElementById("adminOrderStatusFilter")?.addEventListener("change", (event) => {
+        state.adminUi.orderStatus = event.target.value;
+        renderOrders();
+      });
+      [...el.screens.orders.querySelectorAll("[data-save-order]")].forEach((button) => {
+        button.addEventListener("click", () => saveOrderStatus(button.dataset.saveOrder, button));
+      });
+    }
+
+    function attachAdminProductsEvents() {
+      document.getElementById("createProductForm")?.addEventListener("submit", createProduct);
+      document.getElementById("createCategoryForm")?.addEventListener("submit", createCategory);
+      document.getElementById("adminProductSearch")?.addEventListener("input", (event) => {
+        state.adminUi.productSearch = event.target.value;
+        renderCatalog();
+      });
+      document.getElementById("adminProductCategoryFilter")?.addEventListener("change", (event) => {
+        state.adminUi.productCategory = event.target.value;
+        renderCatalog();
+      });
+      [...el.screens.catalog.querySelectorAll("[data-save-product]")].forEach((button) => {
+        button.addEventListener("click", () => saveProduct(button.dataset.saveProduct));
+      });
+      [...el.screens.catalog.querySelectorAll("[data-delete-product]")].forEach((button) => {
+        button.addEventListener("click", () => deleteProduct(button.dataset.deleteProduct));
+      });
+      [...el.screens.catalog.querySelectorAll("[data-save-category]")].forEach((button) => {
+        button.addEventListener("click", () => saveCategory(button.dataset.saveCategory));
+      });
+      [...el.screens.catalog.querySelectorAll("[data-delete-category]")].forEach((button) => {
+        button.addEventListener("click", () => deleteCategory(button.dataset.deleteCategory));
+      });
+    }
+
+    function attachAdminContractorsEvents() {
+      document.getElementById("adminContractorSearch")?.addEventListener("input", (event) => {
+        state.adminUi.contractorSearch = event.target.value;
+        renderCart();
+      });
+      [...el.screens.cart.querySelectorAll("[data-save-contractor]")].forEach((button) => {
+        button.addEventListener("click", () => saveContractor(button.dataset.saveContractor));
+      });
+    }
+
+    function attachAdminLeadsEvents() {
+      document.getElementById("adminLeadSearch")?.addEventListener("input", (event) => {
+        state.adminUi.leadSearch = event.target.value;
+        renderDocs();
+      });
+      [...el.screens.docs.querySelectorAll("[data-approve-lead]")].forEach((button) => {
+        button.addEventListener("click", () => approveLead(button.dataset.approveLead));
+      });
+      document.getElementById("runRemindersBtn")?.addEventListener("click", runReminders);
+    }
+
+    function attachAdminSupportEvents() {
+      document.getElementById("adminSupportSearch")?.addEventListener("input", (event) => {
+        state.adminUi.supportSearch = event.target.value;
+        renderAdmin();
+      });
+      document.getElementById("adminSupportStatusFilter")?.addEventListener("change", (event) => {
+        state.adminUi.supportStatus = event.target.value;
+        renderAdmin();
+      });
+      [...el.screens.admin.querySelectorAll("[data-save-support]")].forEach((button) => {
+        button.addEventListener("click", () => saveSupportRequestStatus(button.dataset.saveSupport));
+      });
+      [...el.screens.admin.querySelectorAll("[data-save-document-request]")].forEach((button) => {
+        button.addEventListener("click", () => saveDocumentRequestStatus(button.dataset.saveDocumentRequest));
+      });
+      document.getElementById("adminDocumentUploadForm")?.addEventListener("submit", uploadAdminDocument);
+    }
+
+    function renderHome() {
+      const contractor = state.contractor || {};
+      if (state.role === "guest") {
+        el.screens.home.innerHTML = `
+          <div class="split">
+            <div class="card">
+              <h2 class="section-title">Поставки для контрагентов</h2>
+              <p class="muted">
+                Авторизация выполняется по ИНН или номеру договора. После входа будут доступны каталог, корзина,
+                каталог, корзина, история заявок, баланс и документы.
+              </p>
+              <div class="stats-grid">
+                <div class="stat"><span>Направление</span><strong>Поставки по договорам</strong></div>
+                <div class="stat"><span>Формат оплаты</span><strong>Предоплата / отсрочка</strong></div>
+                <div class="stat"><span>Документы</span><strong>PDF-счета</strong></div>
+                <div class="stat"><span>Сервис</span><strong>Онлайн-сервис</strong></div>
+              </div>
+            </div>
+            <div class="card">
+              <h2 class="section-title">Вход по договору</h2>
+              <form class="form" id="authForm">
+                <div class="field">
+                  <label>ИНН или номер договора</label>
+                  <input id="authIdentifier" placeholder="Например, 4329000000 или ДГ-24/118">
+                </div>
+                <button class="btn primary" type="submit">Войти как контрагент</button>
+              </form>
+              <div class="notice">
+                Если данные не найдены, оставьте заявку на сотрудничество ниже. Новые контрагенты по умолчанию работают по предоплате.
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("authForm").addEventListener("submit", handleAuthSubmit);
+        return;
+      }
+
+      if (state.role === "admin") {
+        el.screens.home.innerHTML = renderAdminOverview();
+        attachAdminOverviewEvents();
+        return;
+      }
+
+      el.screens.home.innerHTML = `
+        <div class="split">
+          <div class="card">
+            <h2 class="section-title">Личный кабинет контрагента</h2>
+            <div class="stats-grid">
+              <div class="stat"><span>Организация</span><strong>${contractor.company_name || "—"}</strong></div>
+              <div class="stat"><span>Договор</span><strong>${contractor.contract_number || "—"}</strong></div>
+              <div class="stat"><span>Тип оплаты</span><strong>${paymentTypeLabel(contractor.payment_type)}</strong></div>
+              ${contractor.status_label ? `<div class="stat"><span>Статус</span><strong>${contractor.status_label}</strong></div>` : ""}
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Финансовые условия</h2>
+            <div class="stats-grid">
+              <div class="stat"><span>Задолженность</span><strong>${formatMoney(contractor.current_debt)}</strong></div>
+              <div class="stat"><span>Кредитный лимит</span><strong>${formatMoney(contractor.credit_limit)}</strong></div>
+              <div class="stat"><span>Доступный остаток</span><strong>${formatMoney(contractor.available_limit)}</strong></div>
+              <div class="stat"><span>Дней отсрочки</span><strong>${contractor.payment_days || 0}</strong></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCatalog() {
+      if (state.role === "admin") {
+        el.screens.catalog.innerHTML = renderAdminProductsSection();
+        attachAdminProductsEvents();
+        return;
+      }
+
+      const canOrder = state.role === "partner";
+      const search = `
+        <div class="catalog-toolbar">
+          <div class="search">
+            <span>Поиск</span>
+            <input id="productSearch" placeholder="Найти товар по названию">
+          </div>
+          <select id="categorySelect">
+            <option value="">Все категории</option>
+            ${state.categories.map((category) => `<option value="${category.id}">${category.name}</option>`).join("")}
+          </select>
+        </div>
+      `;
+      const products = state.filteredProducts.length ? state.filteredProducts : state.products;
+      const grid = products.length ? products.map((product) => `
+        <article class="product clickable" data-open-product="${product.id}">
+          <div class="product-visual">
+            ${product.image ? `<img src="${product.image}" alt="${product.name}">` : `<span>${String(product.name || "Т").slice(0, 1)}</span>`}
+          </div>
+          <div>
+            <h3>${product.name}</h3>
+            <p>${product.description || "Позиция каталога для оформления заявок."}</p>
+          </div>
+          <div class="meta">
+            Мин. квант: ${Number(product.min_quantity || 1)} · Остаток: ${Number(product.stock_quantity || 0)}
+          </div>
+          <div class="product-foot">
+            <div class="price">${formatMoney(product.price)}</div>
+            ${canOrder ? `<button class="btn primary" data-add="${product.id}">В корзину</button>` : `<span class="badge">Для оформления заявок войдите по договору</span>`}
+          </div>
+        </article>
+      `).join("") : `<div class="empty">Товары не найдены.</div>`;
+
+      el.screens.catalog.innerHTML = `
+        <div class="card">
+          <h2 class="section-title">Каталог товаров</h2>
+          <p class="muted">Каталог товаров с учётом минимального количества отгрузки и складских остатков.</p>
+          ${search}
+          <div class="catalog-grid">${grid}</div>
+        </div>
+      `;
+
+      document.getElementById("productSearch").addEventListener("input", applyCatalogFilters);
+      document.getElementById("categorySelect").addEventListener("change", applyCatalogFilters);
+      [...el.screens.catalog.querySelectorAll("[data-open-product]")].forEach((card) => {
+        card.addEventListener("click", () => openProductDetails(card.dataset.openProduct));
+      });
+      [...el.screens.catalog.querySelectorAll("[data-add]")].forEach((button) => {
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const product = state.products.find((item) => String(item.id) === button.dataset.add);
+          if (product) addToCart(product);
+        });
+      });
+    }
+
+    function applyCatalogFilters() {
+      const searchValue = (document.getElementById("productSearch")?.value || "").trim().toLowerCase();
+      const categoryValue = document.getElementById("categorySelect")?.value || "";
+      state.filteredProducts = state.products.filter((product) => {
+        const matchesSearch = !searchValue || String(product.name || "").toLowerCase().includes(searchValue);
+        const matchesCategory = !categoryValue || String(product.category_id) === String(categoryValue);
+        return matchesSearch && matchesCategory;
+      });
+      renderCatalog();
+    }
+
+    function renderCart() {
+      if (state.role !== "partner") {
+        if (state.role === "admin") {
+          el.screens.cart.innerHTML = renderAdminContractorsSection();
+          attachAdminContractorsEvents();
+        } else {
+          el.screens.cart.innerHTML = `<div class="empty">Корзина доступна только контрагентам.</div>`;
+        }
+        return;
+      }
+
+      const items = getCartItems();
+      if (!items.length) {
+        el.screens.cart.innerHTML = `
+          <div class="card">
+            <h2 class="section-title">Корзина</h2>
+            <div class="empty">Корзина пуста. Добавьте товары из каталога.</div>
+          </div>
+        `;
+        return;
+      }
+
+      el.screens.cart.innerHTML = `
+        <div class="split">
+          <div class="card">
+            <h2 class="section-title">Корзина</h2>
+            <div class="list">
+              ${items.map((item) => `
+                <div class="line-item">
+                  <div class="line-head">
+                    <div>
+                      <strong>${item.name}</strong>
+                      <div class="meta">Мин. квант: ${item.min_quantity} · Цена: ${formatMoney(item.price)}</div>
+                    </div>
+                    <div><strong>${formatMoney(item.price * item.quantity)}</strong></div>
+                  </div>
+                  <div class="qty-box">
+                    <button class="icon-btn" data-dec="${item.product_id}">−</button>
+                    <strong>${item.quantity}</strong>
+                    <button class="icon-btn" data-inc="${item.product_id}">+</button>
+                    <button class="btn danger" data-remove="${item.product_id}">Удалить</button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Оформление заявки</h2>
+            <form class="form" id="checkoutForm">
+              <div class="notice">
+                Тип оплаты задаётся по договору автоматически. Для предоплаты будет сформирован PDF-счёт.
+              </div>
+              <div class="field">
+                <label>Комментарий к заявке</label>
+                <textarea id="orderComment" placeholder="Например, желаемая дата отгрузки или комментарий менеджеру"></textarea>
+              </div>
+              <button class="btn primary full" type="submit" ${state.isSubmittingOrder ? "disabled" : ""}>
+                ${state.isSubmittingOrder ? "Отправляем заявку..." : `Оформить заявку на ${formatMoney(cartTotal())}`}
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+
+      [...el.screens.cart.querySelectorAll("[data-inc]")].forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = state.cart[button.dataset.inc];
+          if (item) setCartQuantity(button.dataset.inc, item.quantity + item.min_quantity);
+        });
+      });
+      [...el.screens.cart.querySelectorAll("[data-dec]")].forEach((button) => {
+        button.addEventListener("click", () => {
+          const item = state.cart[button.dataset.dec];
+          if (item) setCartQuantity(button.dataset.dec, item.quantity - item.min_quantity);
+        });
+      });
+      [...el.screens.cart.querySelectorAll("[data-remove]")].forEach((button) => {
+        button.addEventListener("click", () => setCartQuantity(button.dataset.remove, 0));
+      });
+      document.getElementById("checkoutForm").addEventListener("submit", submitOrder);
+    }
+
+    function renderOrders() {
+      if (state.role === "guest") {
+        el.screens.orders.innerHTML = `<div class="empty">История заявок будет доступна после авторизации.</div>`;
+        return;
+      }
+      if (state.role === "admin") {
+        el.screens.orders.innerHTML = renderAdminOrdersSection();
+        attachAdminOrdersEvents();
+        return;
+      }
+
+      const orders = state.orders;
+      el.screens.orders.innerHTML = `
+        <div class="card">
+          <div class="toolbar-row">
+            <div>
+              <h2 class="section-title">История заявок</h2>
+              <p class="muted">Заявки, статусы, подтверждение оплаты и ссылки на документы.</p>
+            </div>
+            <button class="btn soft" id="refreshOrdersBtn">Обновить</button>
+          </div>
+          <div class="list">
+            ${orders.length ? orders.map((order) => `
+              <article class="order-card">
+                <div class="line-head">
+                  <div>
+                    <strong>Ваш заказ ${displayCustomerOrderNumber(order) || `#${order.id}`}</strong>
+                    <div class="meta">${displayOrderNumber(order)}</div>
+                    <div class="meta">${order.created_at ? String(order.created_at).slice(0, 16).replace("T", " ") : ""}</div>
+                  </div>
+                  <span class="badge ${order.status === "waiting_payment" ? "warn" : order.status === "cancelled" || order.status === "rejected" ? "danger" : ""}">
+                    ${order.status_label || orderStatusLabel(order.status)}
+                  </span>
+                </div>
+                <div class="meta">
+                  Тип оплаты: ${paymentTypeLabel(order.payment_type)} · Сумма: ${formatMoney(order.total_amount)}
+                  ${order.payment_due_date ? ` · Срок оплаты: ${order.payment_due_date}` : ""}
+                </div>
+                <div class="list" style="margin-top: 12px;">
+                  ${(order.items || []).map((item) => `
+                    <div class="line-item">
+                      <div class="line-head">
+                        <div>${item.name}</div>
+                        <div>${item.quantity} × ${formatMoney(item.price)}</div>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+                <div class="action-row" style="margin-top: 12px;">
+                  ${order.payment_type === "prepayment" && (order.status === "waiting_payment" || order.status === "payment_check")
+                    ? `<button class="btn warn" data-notify-payment="${order.id}">Я оплатил</button>` : ""}
+                  ${order.invoice_pdf_url ? `<a class="btn soft" href="${order.invoice_pdf_url}" target="_blank" rel="noreferrer">PDF-счёт</a>` : ""}
+                </div>
+              </article>
+            `).join("") : `<div class="empty">Заявок пока нет.</div>`}
+          </div>
+        </div>
+      `;
+
+      document.getElementById("refreshOrdersBtn")?.addEventListener("click", loadOrders);
+      [...el.screens.orders.querySelectorAll("[data-notify-payment]")].forEach((button) => {
+        button.addEventListener("click", () => notifyPayment(button.dataset.notifyPayment));
+      });
+    }
+
+    function renderDocs() {
+      if (state.role === "guest") {
+        el.screens.docs.innerHTML = `
+          <div class="split">
+            <div class="card">
+              <h2 class="section-title">Сотрудничество со Слободским РАЙПО</h2>
+              <p class="muted">Оставьте заявку, если хотите подключиться к личному кабинету.</p>
+              <form class="form" id="leadForm">
+                <div class="form-grid">
+                  <div class="field"><label>Компания</label><input id="leadCompany" required></div>
+                  <div class="field"><label>ИНН</label><input id="leadInn" required></div>
+                  <div class="field"><label>Контактное лицо</label><input id="leadContact" required></div>
+                  <div class="field"><label>Телефон</label><input id="leadPhone" required></div>
+                </div>
+                <div class="field"><label>Город</label><input id="leadCity" required></div>
+                <button class="btn primary" type="submit">Отправить заявку на сотрудничество</button>
+              </form>
+            </div>
+            <div class="card">
+              <h2 class="section-title">Общая информация</h2>
+              <div class="list">
+                <div class="line-item">
+                  <strong>Контакты отдела продаж</strong>
+                  <div class="meta">Телефон: +7 (83362) 4-00-00 · Email: b2b@raipo.local</div>
+                </div>
+                <div class="line-item">
+                  <strong>Как оформить заявку</strong>
+                  <div class="meta">Организация оформляет заявку, после чего менеджер проверяет условия договора и статус оплаты.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("leadForm").addEventListener("submit", submitLead);
+        return;
+      }
+
+      if (state.role === "admin") {
+        el.screens.docs.innerHTML = renderAdminLeadsSection();
+        attachAdminLeadsEvents();
+        return;
+      }
+
+      el.screens.docs.innerHTML = `
+        <div class="split">
+          <div class="card">
+            <h2 class="section-title">Документы</h2>
+            <p class="muted">Здесь можно сформировать акт сверки по договору или запросить дубликат накладной по ранее оформленной заявке.</p>
+            <div class="action-row">
+              <button class="btn primary" id="reconciliationBtn">Сформировать акт сверки</button>
+              <button class="btn soft" id="duplicateToggleBtn">Запросить дубликат накладной</button>
+            </div>
+            ${state.reconciliationDocumentUrl ? `<div class="notice" style="margin-top: 12px;">Акт сверки готов. <a href="${state.reconciliationDocumentUrl}" target="_blank" rel="noreferrer">Открыть PDF</a></div>` : ""}
+            <form class="form hidden" id="duplicateForm">
+              <div class="field">
+                <label>Выберите заявку</label>
+                <select id="duplicateOrderId" required>
+                  <option value="">Выберите заказ</option>
+                  ${(state.orders || []).map((order) => `<option value="${order.id}">${displayCustomerOrderNumber(order) || `#${order.id}`} · ${displayOrderNumber(order)}</option>`).join("")}
+                </select>
+              </div>
+              <button class="btn warn" type="submit">Отправить запрос</button>
+            </form>
+          </div>
+          <div class="card">
+            <h2 class="section-title">Мои документы</h2>
+            <div class="list" style="margin-bottom: 14px;">
+              ${(state.documents || []).length ? state.documents.map((item) => `
+                <div class="line-item">
+                  <div class="line-head">
+                    <div>
+                      <strong>${item.title || documentTypeLabel(item.document_type)}</strong>
+                      <div class="meta">${documentTypeLabel(item.document_type)} · ${formatDate(item.uploaded_at)}</div>
+                    </div>
+                    <a class="btn soft" href="${item.file_url}" target="_blank" rel="noreferrer">Скачать</a>
+                  </div>
+                </div>
+              `).join("") : `<div class="empty">Документы пока не загружены.</div>`}
+            </div>
+            <h2 class="section-title">Финансовые условия</h2>
+            <div class="list">
+              <div class="line-item">
+                <strong>Тип оплаты по договору</strong>
+                <div class="meta">${paymentTypeLabel(state.contractor?.payment_type)}</div>
+              </div>
+              <div class="line-item">
+                <strong>Кредитный лимит</strong>
+                <div class="meta">${formatMoney(state.contractor?.credit_limit)}</div>
+              </div>
+              <div class="line-item">
+                <strong>Текущая задолженность</strong>
+                <div class="meta">${formatMoney(state.contractor?.current_debt)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById("reconciliationBtn").addEventListener("click", requestReconciliation);
+      document.getElementById("duplicateToggleBtn").addEventListener("click", () => {
+        document.getElementById("duplicateForm").classList.toggle("hidden");
+      });
+      document.getElementById("duplicateForm").addEventListener("submit", submitDuplicateRequest);
+    }
+
+    function renderAdmin() {
+      if (state.role !== "admin") {
+        el.screens.admin.innerHTML = "";
+        return;
+      }
+      el.screens.admin.innerHTML = `
+        <div class="card">
+          <h2 class="section-title">Панель управления</h2>
+          <div class="empty">Для администратора доступны отдельные разделы: Обзор, Заявки, Товары, Контрагенты и Сотрудничество.</div>
+        </div>
+      `;
+    }
+
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const identifier = document.getElementById("authIdentifier").value.trim();
+      if (!identifier) {
+        showToast("Введите ИНН или номер договора", true);
+        return;
+      }
+      try {
+        await api("/auth/link", {
+          method: "POST",
+          body: JSON.stringify({ vk_id: state.vkId, identifier })
+        });
+        showToast("Авторизация выполнена");
+        await bootstrapSession();
+        await Promise.all([loadOrders(), loadBalance()]);
+        setScreen("home");
+      } catch (error) {
+        showToast(error.message, true);
       }
     }
-    loadCart();
-    syncCartUi();
-  }
 
-  async function loadCatalog() {
-    try {
-      await discoverApiBase();
-      const [categories, products] = await Promise.all([
-        api("/categories"),
-        api("/products"),
-      ]);
-      state.categories = Array.isArray(categories) ? categories : [];
-      state.products = Array.isArray(products) ? products : [];
-    } catch (error) {
-      el.categoryChips.innerHTML = "";
-      el.productGrid.innerHTML = `<div class="empty">Не удалось загрузить каталог. Проверьте backend API: ${escapeHtml(API_BASE)}</div>`;
-      toast("Не удалось загрузить каталог");
+    async function submitLead(event) {
+      event.preventDefault();
+      try {
+        await api("/lead-requests", {
+          method: "POST",
+          body: JSON.stringify({
+            vk_id: state.vkId || undefined,
+            company_name: document.getElementById("leadCompany").value.trim(),
+            inn: document.getElementById("leadInn").value.trim(),
+            contact_name: document.getElementById("leadContact").value.trim(),
+            phone: document.getElementById("leadPhone").value.trim(),
+            city: document.getElementById("leadCity").value.trim()
+          })
+        });
+        event.target.reset();
+        showToast("Заявка на сотрудничество сохранена");
+      } catch (error) {
+        showToast(error.message, true);
+      }
     }
-    renderCategories();
-    renderProducts();
-  }
 
-  el.tabs.forEach(tab => tab.addEventListener("click", () => setScreen(tab.dataset.screen)));
-  el.searchInput.addEventListener("input", event => {
-    state.query = event.target.value;
-    renderProducts();
-  });
-  el.primaryBtn.addEventListener("click", () => {
-    const active = el.tabs.find(tab => tab.classList.contains("active")).dataset.screen;
-    if (active === "catalog") setScreen("cart");
-    else if (active === "cart") setScreen("checkout");
-    else if (active === "checkout") setScreen("history");
-    else setScreen("catalog");
-  });
-  el.clearCartBtn.addEventListener("click", () => {
-    clearCart();
-    toast("Корзина очищена");
-  });
-  el.deliveryType.addEventListener("change", () => {
-    el.addressField.classList.toggle("hidden", el.deliveryType.value === "pickup");
-  });
-  el.paymentMethod.addEventListener("change", updateSubmitText);
-  el.submitOrderBtn.addEventListener("click", submitOrder);
-  el.closeModalBtn.addEventListener("click", closeProduct);
-  el.modal.addEventListener("click", event => {
-    if (event.target === el.modal) closeProduct();
-  });
-  el.modalAddBtn.addEventListener("click", () => {
-    if (state.selectedProduct) addToCart(state.selectedProduct);
-    closeProduct();
-  });
+    async function submitOrder(event) {
+      event.preventDefault();
+      if (state.role !== "partner") {
+        showToast("Оформление заявок доступно только контрагентам", true);
+        return;
+      }
+      if (state.isSubmittingOrder) {
+        return;
+      }
+      const items = getCartItems().map((item) => ({ product_id: item.product_id, quantity: item.quantity }));
+      if (!items.length) {
+        showToast("Корзина пуста", true);
+        return;
+      }
+      const comment = document.getElementById("orderComment")?.value.trim() || "";
+      state.isSubmittingOrder = true;
+      renderCart();
+      updateCartBar();
+      try {
+        await api("/cart", { method: "POST", body: JSON.stringify({ items }) });
+        const result = await api("/orders", {
+          method: "POST",
+          body: JSON.stringify({
+            vk_id: state.vkId,
+            items,
+            comment
+          })
+        });
+        state.cart = {};
+        state.isSubmittingOrder = false;
+        renderCart();
+        updateCartBar();
+        await Promise.all([loadOrders(), loadBalance(), loadDocuments(), loadAdminData()]);
+        renderHome();
+        renderDocs();
+        showToast(result.payment_hint || "Заявка создана");
+        setScreen("orders");
+      } catch (error) {
+        state.isSubmittingOrder = false;
+        renderCart();
+        updateCartBar();
+        showToast(error.message, true);
+      }
+    }
 
-  (async function init() {
-    updateSubmitText();
-    await initVk();
-    await loadCatalog();
-    renderCart();
-    await loadOrders();
-  })();
+    async function loadSession() {
+      const session = await api(`/session?vk_id=${state.vkId}`);
+      state.role = session.role;
+      state.isAdmin = session.is_admin;
+      state.contractor = session.contractor;
+      renderSessionPill();
+      buildNav();
+    }
+
+    async function loadCatalog() {
+      const [categories, products] = await Promise.all([api("/categories"), api("/products")]);
+      state.categories = categories;
+      state.products = products;
+      state.filteredProducts = [];
+    }
+
+    async function loadOrders() {
+      if (state.role !== "partner") {
+        state.orders = [];
+        renderOrders();
+        return;
+      }
+      state.orders = await api(`/orders?vk_id=${state.vkId}`);
+      renderOrders();
+    }
+
+    async function loadBalance() {
+      if (state.role !== "partner") {
+        state.balance = null;
+        return;
+      }
+      state.balance = await api(`/balance?vk_id=${state.vkId}`);
+      state.contractor = state.balance.contractor;
+    }
+
+    async function loadDocuments() {
+      if (state.role !== "partner") {
+        state.documents = [];
+        return;
+      }
+      state.documents = await api(`/documents/list?vk_id=${state.vkId}`);
+    }
+
+    async function fileToBase64(file) {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 0x8000;
+      let binary = "";
+      for (let index = 0; index < bytes.length; index += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    async function uploadAdminDocument(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById("adminDocumentFile");
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        showToast("Выберите файл", true);
+        return;
+      }
+      const contractorId = document.getElementById("adminDocumentContractor").value;
+      const documentType = document.getElementById("adminDocumentType").value;
+      const title = document.getElementById("adminDocumentTitle").value.trim();
+      const orderId = document.getElementById("adminDocumentOrder").value;
+      const requestId = document.getElementById("adminDocumentRequest").value;
+      try {
+        const fileContentBase64 = await fileToBase64(file);
+        await api(`/admin/documents/upload?vk_id=${state.vkId}`, {
+          method: "POST",
+          body: JSON.stringify({
+            contractor_id: Number(contractorId),
+            document_type: documentType,
+            title,
+            order_id: orderId ? Number(orderId) : null,
+            request_id: requestId ? Number(requestId) : null,
+            file_name: file.name,
+            file_content_base64: fileContentBase64
+          })
+        });
+        showToast("Документ загружен");
+        event.target.reset();
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function loadAdminData() {
+      if (state.role !== "admin") {
+        state.admin = { stats: null, orders: [], contractors: [], leads: [], supportRequests: [], documentRequests: [], documents: [] };
+        return;
+      }
+      const [stats, orders, contractors, leads, supportRequests, documentRequests, documents] = await Promise.all([
+        api(`/admin/stats?vk_id=${state.vkId}`),
+        api(`/admin/orders?vk_id=${state.vkId}`),
+        api(`/admin/contractors?vk_id=${state.vkId}`),
+        api(`/admin/leads?vk_id=${state.vkId}`),
+        api(`/admin/support?vk_id=${state.vkId}`),
+        api(`/admin/document-requests?vk_id=${state.vkId}`),
+        api(`/admin/documents?vk_id=${state.vkId}`)
+      ]);
+      state.admin = { stats, orders, contractors, leads, supportRequests, documentRequests, documents };
+    }
+
+    async function notifyPayment(orderId) {
+      if (state.role !== "partner") {
+        showToast("Подтверждение оплаты доступно только контрагентам", true);
+        return;
+      }
+      try {
+        await api(`/orders/${orderId}/notify-payment?vk_id=${state.vkId}`, { method: "POST" });
+        showToast("Отметка об оплате отправлена");
+        await Promise.all([loadOrders(), loadAdminData()]);
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function createProduct(event) {
+      event.preventDefault();
+      try {
+        await api(`/admin/products?vk_id=${state.vkId}`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: document.getElementById("newProductName").value.trim(),
+            description: document.getElementById("newProductDescription").value.trim() || null,
+            price: Number(document.getElementById("newProductPrice").value || 0),
+            min_quantity: Number(document.getElementById("newProductMinQty").value || 1),
+            stock_quantity: Number(document.getElementById("newProductStock").value || 0),
+            category_id: Number(document.getElementById("newProductCategory").value),
+            image: document.getElementById("newProductImage").value.trim() || null
+          })
+        });
+        showToast("Товар добавлен");
+        event.target.reset();
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveProduct(productId) {
+      const scope = el.screens.catalog;
+      try {
+        await api(`/admin/products/${productId}?vk_id=${state.vkId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name: scope.querySelector(`[data-product-name="${productId}"]`)?.value.trim(),
+            description: scope.querySelector(`[data-product-description="${productId}"]`)?.value.trim() || null,
+            price: Number(scope.querySelector(`[data-product-price="${productId}"]`)?.value || 0),
+            min_quantity: Number(scope.querySelector(`[data-product-min="${productId}"]`)?.value || 1),
+            stock_quantity: Number(scope.querySelector(`[data-product-stock="${productId}"]`)?.value || 0),
+            category_id: Number(scope.querySelector(`[data-product-category="${productId}"]`)?.value),
+            image: scope.querySelector(`[data-product-image="${productId}"]`)?.value.trim() || null
+          })
+        });
+        showToast("Товар обновлён");
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function deleteProduct(productId) {
+      try {
+        await api(`/admin/products/${productId}?vk_id=${state.vkId}`, { method: "DELETE" });
+        showToast("Товар удалён");
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function createCategory(event) {
+      event.preventDefault();
+      try {
+        await api(`/admin/categories?vk_id=${state.vkId}`, {
+          method: "POST",
+          body: JSON.stringify({ name: document.getElementById("newCategoryName").value.trim() })
+        });
+        showToast("Категория добавлена");
+        event.target.reset();
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveCategory(categoryId) {
+      const scope = el.screens.catalog;
+      try {
+        await api(`/admin/categories/${categoryId}?vk_id=${state.vkId}`, {
+          method: "PUT",
+          body: JSON.stringify({ name: scope.querySelector(`[data-category-name="${categoryId}"]`)?.value.trim() })
+        });
+        showToast("Категория обновлена");
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function deleteCategory(categoryId) {
+      try {
+        await api(`/admin/categories/${categoryId}?vk_id=${state.vkId}`, { method: "DELETE" });
+        showToast("Категория удалена");
+        await loadCatalog();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveContractor(contractorId) {
+      const scope = el.screens.cart;
+      try {
+        await api(`/admin/contractors/${contractorId}?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            payment_type: scope.querySelector(`[data-contractor-payment-type="${contractorId}"]`)?.value,
+            credit_limit: Number(scope.querySelector(`[data-contractor-credit-limit="${contractorId}"]`)?.value || 0),
+            payment_days: Number(scope.querySelector(`[data-contractor-payment-days="${contractorId}"]`)?.value || 0),
+            status: scope.querySelector(`[data-contractor-status="${contractorId}"]`)?.value
+          })
+        });
+        showToast("Параметры контрагента обновлены");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function requestReconciliation() {
+      try {
+        const result = await api(`/documents/reconciliation?vk_id=${state.vkId}`, { method: "POST" });
+        await loadDocuments();
+        state.reconciliationDocumentUrl = result.document_url || "";
+        renderDocs();
+        showToast(result.message);
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function submitDuplicateRequest(event) {
+      event.preventDefault();
+      const orderId = Number(document.getElementById("duplicateOrderId").value);
+      if (!orderId) {
+        showToast("Введите номер заявки", true);
+        return;
+      }
+      try {
+        const result = await api("/documents/duplicate", {
+          method: "POST",
+          body: JSON.stringify({ vk_id: state.vkId, order_id: orderId })
+        });
+        showToast(result.message);
+        event.target.reset();
+        document.getElementById("duplicateForm")?.classList.add("hidden");
+        if (state.role === "admin") {
+          await loadAdminData();
+        }
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveOrderStatus(orderId, trigger = null) {
+      const scope = trigger?.closest(".action-row") || el.screens.orders;
+      const select = scope.querySelector(`[data-order-status="${orderId}"]`) || el.screens.orders.querySelector(`[data-order-status="${orderId}"]`);
+      if (!select) {
+        showToast("Не удалось определить выбранный статус", true);
+        return;
+      }
+      try {
+        await api(`/admin/orders/${orderId}/status?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: select.value })
+        });
+        showToast("Статус заявки обновлён");
+        await Promise.all([loadOrders(), loadAdminData()]);
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function toggleDeferred(contractorId) {
+      const contractor = state.admin.contractors.find((item) => String(item.id) === String(contractorId));
+      if (!contractor) return;
+      const nextType = contractor.payment_type === "deferred" ? "prepayment" : "deferred";
+      const payload = nextType === "deferred"
+        ? { payment_type: "deferred", credit_limit: contractor.credit_limit || 50000, payment_days: contractor.payment_days || 14 }
+        : { payment_type: "prepayment", credit_limit: contractor.credit_limit || 0, payment_days: 0 };
+      try {
+        await api(`/admin/contractors/${contractorId}?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload)
+        });
+        showToast("Условия договора обновлены");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function toggleContractorStatus(contractorId) {
+      const contractor = state.admin.contractors.find((item) => String(item.id) === String(contractorId));
+      if (!contractor) return;
+      const nextStatus = contractor.status === "active" ? "blocked" : "active";
+      try {
+        await api(`/admin/contractors/${contractorId}?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: nextStatus })
+        });
+        showToast("Статус контрагента обновлён");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function runReminders() {
+      try {
+        const result = await api(`/admin/reminders/run?vk_id=${state.vkId}`, { method: "POST" });
+        showToast(`Напоминаний обработано: ${(result.reminders || []).length}`);
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function approveLead(leadId) {
+      try {
+        const result = await api(`/admin/leads/${leadId}/approve?vk_id=${state.vkId}`, { method: "POST" });
+        showToast(result.warning || result.message || "Заявка одобрена");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function submitSupportRequest(event) {
+      event.preventDefault();
+      const subject = document.getElementById("supportSubject")?.value.trim() || "";
+      const message = document.getElementById("supportMessage")?.value.trim() || "";
+      if (!subject || !message) {
+        showToast("Заполните тему и сообщение", true);
+        return;
+      }
+      try {
+        await api("/support/request", {
+          method: "POST",
+          body: JSON.stringify({
+            vk_id: state.vkId,
+            subject,
+            message
+          })
+        });
+        event.target.reset();
+        showToast("Обращение отправлено менеджеру");
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveSupportRequestStatus(requestId) {
+      const select = el.screens.admin.querySelector(`[data-support-status="${requestId}"]`);
+      if (!select) return;
+      try {
+        await api(`/admin/support/${requestId}?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: select.value })
+        });
+        showToast("Статус обращения обновлён");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function saveDocumentRequestStatus(requestId) {
+      const select = el.screens.admin.querySelector(`[data-document-request-status="${requestId}"]`);
+      if (!select) return;
+      try {
+        await api(`/admin/document-requests/${requestId}?vk_id=${state.vkId}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status: select.value })
+        });
+        showToast("Статус запроса документа обновлён");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    /* legacy upload kept for reference
+    async function uploadAdminDocument(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById("adminDocumentFile");
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        showToast("Выберите файл", true);
+        return;
+      }
+      const formData = new FormData();
+      formData.append("contractor_id", document.getElementById("adminDocumentContractor").value);
+      formData.append("document_type", document.getElementById("adminDocumentType").value);
+      formData.append("title", document.getElementById("adminDocumentTitle").value.trim());
+      if (document.getElementById("adminDocumentOrder").value) {
+        formData.append("order_id", document.getElementById("adminDocumentOrder").value);
+      }
+      if (document.getElementById("adminDocumentRequest").value) {
+        formData.append("request_id", document.getElementById("adminDocumentRequest").value);
+      }
+      formData.append("file", file);
+      try {
+        await api(`/admin/documents/upload?vk_id=${state.vkId}`, {
+          method: "POST",
+          body: formData
+        });
+        showToast("Документ загружен");
+        event.target.reset();
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    */
+
+    async function loadAdminData() {
+      if (state.role !== "admin") {
+        state.admin = { stats: null, orders: [], contractors: [], leads: [], supportRequests: [], documentRequests: [], documents: [] };
+        return;
+      }
+      const [stats, orders, contractors, leads, supportRequests, documentRequests, documents] = await Promise.all([
+        api(`/admin/stats?vk_id=${state.vkId}`),
+        api(`/admin/orders?vk_id=${state.vkId}`),
+        api(`/admin/contractors?vk_id=${state.vkId}`),
+        api(`/admin/leads?vk_id=${state.vkId}`),
+        api(`/admin/support?vk_id=${state.vkId}`),
+        api(`/admin/document-requests?vk_id=${state.vkId}`),
+        api(`/admin/documents?vk_id=${state.vkId}`)
+      ]);
+      state.admin = { stats, orders, contractors, leads, supportRequests, documentRequests, documents };
+    }
+
+    function renderAdmin() {
+      if (state.role === "admin") {
+        el.screens.admin.innerHTML = renderAdminSupportSection();
+        attachAdminSupportEvents();
+        return;
+      }
+      el.screens.admin.innerHTML = renderHelpSection();
+      attachHelpEvents();
+    }
+
+    async function bootstrapSession() {
+      await loadSession();
+      await loadCatalog();
+      await Promise.all([loadOrders(), loadBalance(), loadDocuments(), loadAdminData()]);
+      renderAll();
+    }
+
+    function renderAll() {
+      renderSessionPill();
+      buildNav();
+      renderHome();
+      renderCatalog();
+      renderCart();
+      renderOrders();
+      renderDocs();
+      renderAdmin();
+      updateCartBar();
+    }
+
+    async function initVk() {
+      try {
+        await vkBridge.send("VKWebAppInit");
+        const userInfo = await vkBridge.send("VKWebAppGetUserInfo");
+        state.vkId = userInfo.id;
+      } catch (error) {
+        console.warn("VK Bridge init failed", error);
+        state.vkId = Number(new URLSearchParams(window.location.search).get("vk_user_id")) || 1;
+      }
+    }
+
+    el.goCheckoutBtn.addEventListener("click", () => setScreen("cart"));
+    el.productModal.addEventListener("click", (event) => {
+      if (event.target === el.productModal) {
+        closeProductDetails();
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.selectedProduct) {
+        closeProductDetails();
+      }
+    });
+
+    (async function start() {
+      try {
+        await initVk();
+        await bootstrapSession();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message || "Не удалось загрузить кабинет", true);
+      }
+    })();
   </script>
 </body>
 </html>
