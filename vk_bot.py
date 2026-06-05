@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import requests
 import uvicorn
 import vk_api
 from dotenv import load_dotenv
@@ -71,8 +72,9 @@ COMPANY_REQUISITES = [
 
 PAYMENT_TYPES = {"prepayment", "deferred"}
 CONTRACTOR_STATUSES = {"active", "blocked", "new_request"}
-DOCUMENT_REQUEST_TYPES = {"reconciliation_act", "duplicate_invoice"}
-DOCUMENT_REQUEST_STATUSES = {"new", "in_progress", "done", "rejected"}
+DOCUMENT_REQUEST_TYPES = {"reconciliation_act", "duplicate_invoice", "waybill"}
+DOCUMENT_REQUEST_STATUSES = {"new", "pending", "in_progress", "done", "sent", "rejected"}
+SUPPORT_REQUEST_STATUSES = {"new", "in_progress", "closed"}
 ORDER_STATUSES = {
     "new",
     "waiting_payment",
@@ -117,6 +119,16 @@ DOCUMENT_REQUEST_STATUS_LABELS = {
     "in_progress": "В работе",
     "done": "Выполнен",
     "rejected": "Отклонён",
+}
+
+DOCUMENT_REQUEST_TYPE_LABELS["waybill"] = "Товарная накладная"
+DOCUMENT_REQUEST_STATUS_LABELS["pending"] = "Ожидает отправки"
+DOCUMENT_REQUEST_STATUS_LABELS["sent"] = "Отправлен"
+
+SUPPORT_REQUEST_STATUS_LABELS = {
+    "new": "Новое",
+    "in_progress": "В работе",
+    "closed": "Завершено",
 }
 
 BASE_DIR = Path(__file__).parent
@@ -178,10 +190,17 @@ def build_document_file_url(file_name: str) -> str:
     return f"{BACKEND_PUBLIC_URL}{file_url}" if BACKEND_PUBLIC_URL else file_url
 
 
+def safe_document_name(value: str) -> str:
+    normalized = re.sub(r"[^A-Za-z0-9._-]+", "_", value or "").strip("._")
+    return normalized or f"document_{utcnow().strftime('%Y%m%d%H%M%S')}"
+
+
 
 
 def find_pdf_font_path() -> Optional[Path]:
     candidates = [
+        BASE_DIR / "fonts" / "NotoSans-Regular.ttf",
+        BASE_DIR / "fonts" / "DejaVuSans.ttf",
         Path("C:/Windows/Fonts/arial.ttf"),
         Path("C:/Windows/Fonts/tahoma.ttf"),
         Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
@@ -357,6 +376,112 @@ def build_invoice_pdf(
     story.append(Spacer(1, 6 * mm))
     story.append(Paragraph(f"Итого к оплате: {money(order.get('total_amount')):.2f} ₽", title_style))
     story.append(Paragraph("Счет сформирован автоматически. Для запуска в производство требуется предоплата.", body_style))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def build_waybill_pdf(
+    order: Dict[str, Any],
+    contractor: Dict[str, Any],
+    items: List[Dict[str, Any]],
+) -> bytes:
+    from io import BytesIO
+
+    font_name = ensure_pdf_font_registered()
+    buffer = BytesIO()
+    order_number = order.get("order_number") or format_order_number(int(order.get("id") or 0))
+    document_date = str(order.get("created_at") or utcnow().date().isoformat())[:10]
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=15 * mm,
+        rightMargin=15 * mm,
+        topMargin=15 * mm,
+        bottomMargin=15 * mm,
+        title=f"Товарная накладная {order_number}",
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "WaybillTitle",
+        parent=styles["Heading1"],
+        fontName=font_name,
+        fontSize=14,
+        leading=18,
+        alignment=TA_LEFT,
+        spaceAfter=8,
+    )
+    body_style = ParagraphStyle(
+        "WaybillBody",
+        parent=styles["BodyText"],
+        fontName=font_name,
+        fontSize=10,
+        leading=13,
+        wordWrap="CJK",
+        spaceAfter=2,
+    )
+    right_style = ParagraphStyle("WaybillRight", parent=body_style, alignment=TA_RIGHT)
+    small_style = ParagraphStyle("WaybillSmall", parent=body_style, fontSize=9, leading=12)
+
+    story: List[Any] = [
+        Paragraph(f"ТОВАРНАЯ НАКЛАДНАЯ № {order_number} от {document_date}", title_style),
+        Paragraph(f"Номер заказа контрагента: {format_customer_order_number(order.get('customer_order_number'))}", body_style),
+        Spacer(1, 4 * mm),
+        Paragraph(f"Поставщик: {COMPANY_NAME}", body_style),
+        Paragraph(f"Покупатель: {contractor.get('company_name') or '—'}", body_style),
+        Paragraph(f"ИНН покупателя: {contractor.get('inn') or '—'}", body_style),
+        Paragraph(f"Договор: {contractor.get('contract_number') or '—'}", body_style),
+        Spacer(1, 6 * mm),
+    ]
+
+    table_data: List[List[Any]] = [[
+        Paragraph("№", body_style),
+        Paragraph("Товар", body_style),
+        Paragraph("Кол-во", body_style),
+        Paragraph("Цена", body_style),
+        Paragraph("Сумма", body_style),
+    ]]
+    for index, item in enumerate(items, start=1):
+        table_data.append(
+            [
+                Paragraph(str(index), body_style),
+                Paragraph(str(item.get("name") or f"Товар #{item.get('product_id')}"), body_style),
+                Paragraph(str(int(item.get("quantity") or 0)), right_style),
+                Paragraph(f"{money(item.get('price')):.2f} ₽", right_style),
+                Paragraph(f"{money(item.get('line_total')):.2f} ₽", right_style),
+            ]
+        )
+
+    table = Table(
+        table_data,
+        repeatRows=1,
+        colWidths=[12 * mm, 88 * mm, 22 * mm, 28 * mm, 30 * mm],
+        hAlign="LEFT",
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("FONTNAME", (0, 0), (-1, -1), font_name),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("LEADING", (0, 0), (-1, -1), 12),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E7E1D6")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#B6AE9F")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]
+        )
+    )
+    story.append(table)
+    story.append(Spacer(1, 6 * mm))
+    story.append(Paragraph(f"Итого: {money(order.get('total_amount')):.2f} ₽", title_style))
+    story.append(Spacer(1, 10 * mm))
+    story.append(Paragraph("Отпустил: ____________________", small_style))
+    story.append(Spacer(1, 6 * mm))
+    story.append(Paragraph("Получил: ____________________", small_style))
 
     doc.build(story)
     return buffer.getvalue()
@@ -688,11 +813,25 @@ class Repo:
         return result.data[0]
 
     def list_support_requests(self, limit: int = 100, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        query = self._supabase.table("support_requests").select("*").order("id", desc=True).limit(limit)
+        result = self._supabase_request(
+            lambda: self._supabase.table("support_requests").select("*").order("id", desc=True).limit(limit).execute()
+        )
+        rows = result.data or []
+        normalized: List[Dict[str, Any]] = []
+        for row in rows:
+            if row.get("status") == "answered":
+                row = self.update_support_request(int(row["id"]), {"status": "in_progress", "updated_at": iso_now()})
+            normalized.append(row)
         if status:
-            query = query.eq("status", status)
-        result = self._supabase_request(lambda: query.execute())
-        return result.data or []
+            normalized = [row for row in normalized if row.get("status") == status]
+        return normalized
+
+    def get_support_request(self, request_id: int) -> Optional[Dict[str, Any]]:
+        result = self._supabase_request(
+            lambda: self._supabase.table("support_requests").select("*").eq("id", request_id).limit(1).execute()
+        )
+        rows = result.data or []
+        return rows[0] if rows else None
 
     def update_support_request(self, request_id: int, payload: Dict[str, Any]) -> Dict[str, Any]:
         result = self._supabase_request(
@@ -702,8 +841,42 @@ class Repo:
             raise LookupError("Обращение не найдено")
         return result.data[0]
 
+    def auto_close_support_requests(self) -> List[Dict[str, Any]]:
+        threshold = utcnow() - timedelta(days=2)
+        result = self._supabase_request(
+            lambda: self._supabase.table("support_requests").select("*").execute()
+        )
+        closed: List[Dict[str, Any]] = []
+        for row in result.data or []:
+            if row.get("status") not in {"in_progress", "answered"}:
+                continue
+            answered_at = parse_dt(row.get("answered_at"))
+            if answered_at and answered_at < threshold:
+                try:
+                    closed.append(
+                        self.update_support_request(
+                            int(row["id"]),
+                            {"status": "closed", "updated_at": iso_now(), "conversation_state": "closed"},
+                        )
+                    )
+                except Exception:
+                    logger.exception("support auto close failed request_id=%s", row.get("id"))
+            elif row.get("status") == "answered":
+                try:
+                    self.update_support_request(int(row["id"]), {"status": "in_progress", "updated_at": iso_now()})
+                except Exception:
+                    logger.exception("support answered normalize failed request_id=%s", row.get("id"))
+        return closed
+
     def create_document_request(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        result = self._supabase_request(lambda: self._supabase.table("document_requests").insert(payload).execute())
+        try:
+            result = self._supabase_request(lambda: self._supabase.table("document_requests").insert(payload).execute())
+        except Exception:
+            fallback_status = {"pending": "new", "sent": "done"}.get(str(payload.get("status") or ""))
+            if not fallback_status:
+                raise
+            fallback_payload = {**payload, "status": fallback_status}
+            result = self._supabase_request(lambda: self._supabase.table("document_requests").insert(fallback_payload).execute())
         if not result.data:
             raise RuntimeError("Не удалось сохранить запрос документа")
         return result.data[0]
@@ -722,9 +895,18 @@ class Repo:
         return rows
 
     def update_document_request(self, request_id: int, payload: Dict[str, Any]) -> Dict[str, Any]:
-        result = self._supabase_request(
-            lambda: self._supabase.table("document_requests").update(payload).eq("id", request_id).execute()
-        )
+        try:
+            result = self._supabase_request(
+                lambda: self._supabase.table("document_requests").update(payload).eq("id", request_id).execute()
+            )
+        except Exception:
+            fallback_status = {"pending": "new", "sent": "done"}.get(str(payload.get("status") or ""))
+            if not fallback_status:
+                raise
+            fallback_payload = {**payload, "status": fallback_status}
+            result = self._supabase_request(
+                lambda: self._supabase.table("document_requests").update(fallback_payload).eq("id", request_id).execute()
+            )
         if not result.data:
             raise LookupError("Запрос документа не найден")
         row = result.data[0]
@@ -740,6 +922,32 @@ class Repo:
             raise RuntimeError("Не удалось сохранить документ")
         return result.data[0]
 
+    def get_contractor_document(
+        self,
+        contractor_id: int,
+        order_id: int,
+        document_type: str,
+        status: Optional[str] = "active",
+    ) -> Optional[Dict[str, Any]]:
+        query = (
+            self._supabase.table("contractor_documents")
+            .select("*")
+            .eq("contractor_id", contractor_id)
+            .eq("order_id", order_id)
+            .eq("document_type", document_type)
+            .order("uploaded_at", desc=True)
+            .limit(1)
+        )
+        if status:
+            query = query.eq("status", status)
+        result = self._supabase_request(lambda: query.execute())
+        rows = result.data or []
+        if rows:
+            return rows[0]
+        if status:
+            return self.get_contractor_document(contractor_id, order_id, document_type, status=None)
+        return None
+
     def list_contractor_documents(self, contractor_id: int, limit: int = 100) -> List[Dict[str, Any]]:
         result = self._supabase_request(
             lambda: self._supabase.table("contractor_documents")
@@ -749,7 +957,11 @@ class Repo:
             .limit(limit)
             .execute()
         )
-        return result.data or []
+        rows = result.data or []
+        for row in rows:
+            order = self.get_order(int(row.get("order_id") or 0)) if row.get("order_id") else None
+            row["order"] = order_view(order) if order else None
+        return rows
 
     def list_all_contractor_documents(self, limit: int = 200) -> List[Dict[str, Any]]:
         result = self._supabase_request(
@@ -766,6 +978,20 @@ class Repo:
             row["contractor"] = contractor_public_view(contractor) if contractor else None
             row["order"] = order_view(order) if order else None
         return rows
+
+    def get_document_request(self, request_id: int) -> Optional[Dict[str, Any]]:
+        result = self._supabase_request(
+            lambda: self._supabase.table("document_requests").select("*").eq("id", request_id).limit(1).execute()
+        )
+        rows = result.data or []
+        if not rows:
+            return None
+        row = rows[0]
+        contractor = self.get_contractor_by_id(int(row.get("contractor_id") or 0)) or {}
+        order = self.get_order(int(row.get("order_id") or 0)) if row.get("order_id") else None
+        row["contractor"] = contractor_public_view(contractor) if contractor else None
+        row["order"] = order_view(order) if order else None
+        return row
 
     def next_customer_order_number(self, contractor_id: int) -> int:
         result = self._supabase_request(
@@ -889,7 +1115,7 @@ class Repo:
             lambda: self._supabase.table("orders").select("*").eq("id", order_id).limit(1).execute()
         )
         rows = result.data or []
-        return rows[0] if rows else None
+        return self.hydrate_order_document_links(rows[0]) if rows else None
 
     def get_order_for_vk_user(self, vk_id: int, order_id: int) -> Optional[Dict[str, Any]]:
         contractor = self.get_contractor_by_vk_id(vk_id)
@@ -904,7 +1130,7 @@ class Repo:
             .execute()
         )
         rows = result.data or []
-        return rows[0] if rows else None
+        return self.hydrate_order_document_links(rows[0]) if rows else None
 
     def attach_invoice(self, order_id: int, invoice_path: str) -> Dict[str, Any]:
         result = self._supabase_request(
@@ -946,6 +1172,7 @@ class Repo:
         rows = result.data or []
         for row in rows:
             row["items"] = self.list_order_items(int(row["id"]))
+            self.hydrate_order_document_links(row)
         return rows
 
     def list_all_orders(self, limit: int = 100, status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -963,7 +1190,81 @@ class Repo:
                 "contract_number": contractor.get("contract_number"),
             }
             row["items"] = self.list_order_items(int(row["id"]))
+            self.hydrate_order_document_links(row)
         return rows
+
+    def hydrate_order_document_links(self, order: Dict[str, Any]) -> Dict[str, Any]:
+        contractor_id = int(order.get("contractor_id") or 0)
+        order_id = int(order.get("id") or 0)
+        if not contractor_id or not order_id:
+            return order
+        invoice_document = self.get_contractor_document(contractor_id, order_id, "invoice")
+        waybill_document = self.get_contractor_document(contractor_id, order_id, "waybill")
+        if invoice_document:
+            order["invoice_pdf_url"] = invoice_document.get("file_url")
+            order["invoice_document_id"] = invoice_document.get("id")
+        if waybill_document:
+            order["waybill_pdf_url"] = waybill_document.get("file_url")
+            order["waybill_document_id"] = waybill_document.get("id")
+        return order
+
+    def get_or_create_order_document(
+        self,
+        order: Dict[str, Any],
+        contractor: Dict[str, Any],
+        document_type: str,
+        items: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        order_id = int(order.get("id") or 0)
+        contractor_id = int(contractor.get("id") or order.get("contractor_id") or 0)
+        if not order_id or not contractor_id:
+            raise ValueError("Заказ или контрагент не определён")
+        existing = self.get_contractor_document(contractor_id, order_id, document_type, status="active")
+        if existing:
+            if document_type == "invoice" and order.get("invoice_pdf_url") != existing.get("file_url"):
+                try:
+                    self.attach_invoice(order_id, existing.get("file_url"))
+                    order["invoice_pdf_url"] = existing.get("file_url")
+                except Exception:
+                    logger.exception("invoice attach sync failed order_id=%s", order_id)
+            if document_type == "waybill":
+                order["waybill_pdf_url"] = existing.get("file_url")
+            return existing
+
+        items = items or self.list_order_items(order_id)
+        order_number = order.get("order_number") or format_order_number(order_id)
+        if document_type == "invoice":
+            file_name = f"{safe_document_name(f'invoice_{order_number}')}.pdf"
+            file_path = DOCUMENT_DIR / file_name
+            file_path.write_bytes(build_invoice_pdf(order, contractor, items))
+            title = f"Счёт на оплату по заявке {order_number}"
+        elif document_type == "waybill":
+            file_name = f"{safe_document_name(f'waybill_{order_number}')}.pdf"
+            file_path = DOCUMENT_DIR / file_name
+            file_path.write_bytes(build_waybill_pdf(order, contractor, items))
+            title = f"Товарная накладная по заявке {order_number}"
+        else:
+            raise ValueError("Неподдерживаемый тип документа")
+
+        file_url = build_document_file_url(file_name)
+        document = self.create_contractor_document(
+            {
+                "contractor_id": contractor_id,
+                "order_id": order_id,
+                "document_type": document_type,
+                "title": title,
+                "file_name": file_name,
+                "file_url": file_url,
+                "status": "active",
+                "uploaded_at": iso_now(),
+            }
+        )
+        if document_type == "invoice":
+            self.attach_invoice(order_id, file_url)
+            order["invoice_pdf_url"] = file_url
+        else:
+            order["waybill_pdf_url"] = file_url
+        return document
 
 
     def create_b2b_order(self, vk_id: int, items: List[Dict[str, Any]], comment: Optional[str]) -> Dict[str, Any]:
@@ -1037,25 +1338,20 @@ class Repo:
 
             if payment_type == "deferred":
                 self.change_contractor_debt(int(contractor["id"]), total_amount)
-            else:
-                try:
-                    invoice_path = self.generate_invoice_pdf(order, contractor, normalized_items)
-                    order = self.attach_invoice(int(order["id"]), invoice_path)
-                    self.create_contractor_document(
-                        {
-                            "contractor_id": contractor["id"],
-                            "order_id": order["id"],
-                            "document_type": "invoice",
-                            "title": f"Счёт по заявке {order.get('order_number') or format_order_number(int(order['id']))}",
-                            "file_name": Path(invoice_path).name,
-                            "file_url": invoice_path,
-                            "status": "active",
-                            "uploaded_at": iso_now(),
-                        }
-                    )
-                except Exception:
-                    logger.exception("invoice generation failed for order %s", order.get("id"))
-                    order["invoice_pdf_url"] = None
+
+            try:
+                invoice_document = self.get_or_create_order_document(order, contractor, "invoice", normalized_items)
+                order["invoice_pdf_url"] = invoice_document.get("file_url")
+            except Exception:
+                logger.exception("invoice generation failed for order %s", order.get("id"))
+                order["invoice_pdf_url"] = None
+
+            try:
+                waybill_document = self.get_or_create_order_document(order, contractor, "waybill", normalized_items)
+                order["waybill_pdf_url"] = waybill_document.get("file_url")
+            except Exception:
+                logger.exception("waybill generation failed for order %s", order.get("id"))
+                order["waybill_pdf_url"] = None
 
             order["items"] = normalized_items
             order["contractor"] = contractor
@@ -1070,12 +1366,10 @@ class Repo:
         contractor: Dict[str, Any],
         items: List[Dict[str, Any]],
     ) -> str:
-        invoice_path = INVOICE_DIR / f"invoice_order_{order['id']}.pdf"
+        order_number = order.get("order_number") or format_order_number(int(order.get("id") or 0))
+        invoice_path = DOCUMENT_DIR / f"{safe_document_name(f'invoice_{order_number}')}.pdf"
         invoice_path.write_bytes(build_invoice_pdf(order, contractor, items))
-        invoice_url = f"/documents/invoices/{invoice_path.name}"
-        if BACKEND_PUBLIC_URL:
-            return f"{BACKEND_PUBLIC_URL}{invoice_url}"
-        return invoice_url
+        return build_document_file_url(invoice_path.name)
 
     def notify_payment_by_partner(self, vk_id: int, order_id: int) -> Dict[str, Any]:
         order = self.get_order_for_vk_user(vk_id, order_id)
@@ -1187,6 +1481,10 @@ class Repo:
 
 
 repo = Repo(SUPABASE_URL, SUPABASE_KEY)
+
+
+def auto_close_support_requests() -> List[Dict[str, Any]]:
+    return repo.auto_close_support_requests()
 pending_support_requests: Dict[int, bool] = {}
 
 app = FastAPI(title="RAIPO B2B VK System", version="2.0.0")
@@ -1313,9 +1611,13 @@ class SupportRequestStatusIn(BaseModel):
     @field_validator("status")
     @classmethod
     def validate_status(cls, value: str) -> str:
-        if value not in {"new", "in_progress", "closed"}:
+        if value not in SUPPORT_REQUEST_STATUSES:
             raise ValueError("Некорректный статус обращения")
         return value
+
+
+class SupportReplyIn(BaseModel):
+    reply: str = Field(..., min_length=2, max_length=4000)
 
 
 class DocumentRequestStatusIn(BaseModel):
@@ -1383,8 +1685,8 @@ def order_view(order: Dict[str, Any]) -> Dict[str, Any]:
 def contractor_document_view(document: Dict[str, Any]) -> Dict[str, Any]:
     result = dict(document)
     result["document_type_label"] = {
-        "invoice": "Счёт",
-        "waybill": "Накладная",
+        "invoice": "Счёт на оплату",
+        "waybill": "Товарная накладная",
         "contract": "Договор",
         "reconciliation_act": "Акт сверки",
         "other": "Документ",
@@ -1458,6 +1760,46 @@ def build_session(vk_id: int) -> Dict[str, Any]:
     }
 
 
+def process_waybill_request_send(request_id: int) -> Dict[str, Any]:
+    document_request = repo.get_document_request(request_id)
+    if not document_request:
+        raise LookupError("Запрос документа не найден")
+    if document_request.get("document_type") not in {"waybill", "duplicate_invoice"}:
+        raise ValueError("Для этого запроса отправка накладной не поддерживается")
+    contractor = repo.get_contractor_by_id(int(document_request.get("contractor_id") or 0))
+    if not contractor:
+        raise LookupError("Контрагент не найден")
+    contractor_vk_id = int(contractor.get("vk_id") or 0)
+    if contractor_vk_id <= 0:
+        raise ValueError("У контрагента нет привязанного VK ID")
+    order_id = int(document_request.get("order_id") or 0)
+    order = repo.get_order(order_id)
+    if not order:
+        raise LookupError("Заказ не найден")
+    items = repo.list_order_items(order_id)
+    waybill_document = repo.get_or_create_order_document(order, contractor, "waybill", items)
+    file_path = DOCUMENT_DIR / str(waybill_document.get("file_name") or "")
+    if not file_path.exists():
+        raise FileNotFoundError("Файл накладной не найден")
+    order_number = order.get("order_number") or format_order_number(order_id)
+    title = waybill_document.get("title") or f"Товарная накладная по заявке {order_number}"
+    message = (
+        f"Направляем товарную накладную по заявке {order_number}.\n"
+        f"Номер у клиента: {format_customer_order_number(order.get('customer_order_number'))}"
+    )
+    if not send_vk_document(contractor_vk_id, file_path, title, message):
+        raise RuntimeError("Не удалось отправить накладную пользователю")
+    updated_request = repo.update_document_request(
+        request_id,
+        {
+            "status": "sent",
+            "contractor_document_id": waybill_document.get("id"),
+            "updated_at": iso_now(),
+        },
+    )
+    return {"document_request": updated_request, "document": contractor_document_view(waybill_document), "order": order_view(order)}
+
+
 def open_app_button(label: str = "Открыть кабинет") -> Dict[str, Any]:
     if VK_APP_ID and VK_APP_OWNER_ID:
         return {
@@ -1494,6 +1836,13 @@ def text_button(label: str, cmd: str, color: str = "secondary") -> Dict[str, Any
     }
 
 
+def payload_button(label: str, payload: Dict[str, Any], color: str = "secondary") -> Dict[str, Any]:
+    return {
+        "action": {"type": "text", "label": label, "payload": json.dumps(payload, ensure_ascii=False)},
+        "color": color,
+    }
+
+
 def keyboard(rows: List[List[Dict[str, Any]]]) -> str:
     return json.dumps({"one_time": False, "inline": False, "buttons": rows}, ensure_ascii=False)
 
@@ -1504,7 +1853,7 @@ def guest_keyboard() -> str:
             [open_app_button("Открыть кабинет")],
             [text_button("О компании", "about"), text_button("Контакты", "contacts")],
             [text_button("Ассортимент", "catalog"), text_button("Авторизация", "auth_help", "primary")],
-            [text_button("Помощь", "help"), text_button("Сотрудничество", "lead", "positive")],
+            [text_button("Консультация", "consultation", "primary"), text_button("Сотрудничество", "lead", "positive")],
             [text_button("Связаться с менеджером", "support")],
         ]
     )
@@ -1515,7 +1864,7 @@ def partner_keyboard() -> str:
         [
             [open_app_button("Каталог и заявки")],
             [text_button("Мой баланс", "balance", "primary"), text_button("История заявок", "history", "primary")],
-            [text_button("Документы", "documents"), text_button("Помощь", "help")],
+            [text_button("Документы", "documents"), text_button("Консультация", "consultation", "primary")],
             [text_button("Оплата", "payment_help"), text_button("Связаться с менеджером", "support")],
             [text_button("Сменить организацию", "logout")],
             [text_button("Контакты", "contacts"), text_button("О компании", "about")],
@@ -1530,7 +1879,17 @@ def admin_keyboard() -> str:
             [text_button("Статистика", "admin_stats", "primary"), text_button("Заявки", "history", "primary")],
             [text_button("Контрагенты", "contractors"), text_button("Заявки на сотрудничество", "leads")],
             [text_button("Обращения", "support_list"), text_button("Напоминания", "reminders")],
-            [text_button("Контакты", "contacts"), text_button("Помощь", "help")],
+            [text_button("Контакты", "contacts"), text_button("Консультация", "consultation")],
+        ]
+    )
+
+
+def consultation_keyboard() -> str:
+    return keyboard(
+        [
+            [text_button("Как оформить заказ?", "support_order", "primary")],
+            [text_button("Способы оплаты", "support_payment_methods"), text_button("Финансовые условия", "support_finance")],
+            [text_button("Документы", "support_documents"), text_button("Связаться с менеджером", "support", "positive")],
         ]
     )
 
@@ -1544,36 +1903,77 @@ def keyboard_for_role(vk_id: int) -> str:
     return guest_keyboard()
 
 
-def safe_send(vk: Any, user_id: int, message: str, kb: Optional[str] = None) -> None:
+def safe_send(vk: Any, user_id: int, message: str, kb: Optional[str] = None) -> bool:
     params = {"user_id": user_id, "message": message, "random_id": get_random_id()}
     if kb:
         params["keyboard"] = kb
     try:
         vk.messages.send(**params)
+        return True
     except ApiError as exc:
         if getattr(exc, "code", None) == 911 and kb:
             params.pop("keyboard", None)
-            vk.messages.send(**params)
+            try:
+                vk.messages.send(**params)
+                return True
+            except ApiError:
+                logger.exception("VK send failed without keyboard")
+                return False
         logger.exception("VK send failed")
+        return False
 
 
-def send_vk_notification(user_id: int, message: str) -> bool:
+def send_vk_notification(user_id: int, message: str, kb: Optional[str] = None) -> bool:
     if user_id <= 0:
         return False
     try:
         session = vk_api.VkApi(token=VK_TOKEN)
         vk = session.get_api()
-        safe_send(vk, user_id, message)
-        return True
+        return safe_send(vk, user_id, message, kb=kb)
     except Exception:
         logger.exception("VK notification failed user_id=%s", user_id)
         return False
 
 
-def notify_admins(message: str) -> None:
+def notify_admins(message: str, kb: Optional[str] = None) -> None:
     for admin_vk_id in get_admin_vk_ids():
-        if not send_vk_notification(admin_vk_id, message):
+        if not send_vk_notification(admin_vk_id, message, kb=kb):
             logger.warning("Admin notification failed admin_vk_id=%s", admin_vk_id)
+
+
+def send_vk_document(user_id: int, file_path: Path, title: str, message: Optional[str] = None) -> bool:
+    if user_id <= 0 or not file_path.exists():
+        return False
+    try:
+        session = vk_api.VkApi(token=VK_TOKEN)
+        vk = session.get_api()
+        upload = vk.docs.getMessagesUploadServer(type="doc", peer_id=user_id)
+        with file_path.open("rb") as source:
+            upload_result = requests.post(
+                upload["upload_url"],
+                files={"file": (file_path.name, source, "application/pdf")},
+                timeout=60,
+            )
+        upload_result.raise_for_status()
+        file_token = upload_result.json().get("file")
+        if not file_token:
+            raise RuntimeError("VK upload did not return file token")
+        saved = vk.docs.save(file=file_token, title=title)
+        document = (saved or {}).get("doc") or {}
+        attachment = f"doc{document.get('owner_id')}_{document.get('id')}"
+        params = {"user_id": user_id, "random_id": get_random_id(), "attachment": attachment}
+        if message:
+            params["message"] = message
+        vk.messages.send(**params)
+        return True
+    except Exception:
+        logger.exception("VK document send failed user_id=%s file=%s", user_id, file_path)
+        fallback_message = message or title
+        file_url = build_document_file_url(file_path.name)
+        try:
+            return send_vk_notification(user_id, f"{fallback_message}\n{file_url}")
+        except Exception:
+            return False
 
 
 def show_menu(vk: Any, user_id: int) -> None:
@@ -1721,6 +2121,78 @@ def handle_documents(vk: Any, user_id: int) -> None:
     )
 
 
+def handle_consultation_menu(vk: Any, user_id: int) -> None:
+    safe_send(vk, user_id, "Чем могу помочь?", kb=consultation_keyboard())
+
+
+def handle_support_order_help(vk: Any, user_id: int) -> None:
+    safe_send(
+        vk,
+        user_id,
+        "Как оформить заказ:\n"
+        "1. Откройте кабинет.\n"
+        "2. Выберите товары в каталоге.\n"
+        "3. Добавьте позиции в корзину с учётом минимального количества отгрузки.\n"
+        "4. Проверьте состав заявки и подтвердите оформление.",
+        kb=consultation_keyboard(),
+    )
+
+
+def handle_support_payment_methods(vk: Any, user_id: int) -> None:
+    safe_send(
+        vk,
+        user_id,
+        "Способы оплаты:\n"
+        "• Предоплата — после оформления заявки формируется счёт на оплату.\n"
+        "• Отсрочка — доступна контрагентам, которым установлен лимит по договору.\n"
+        "Оплату подтверждает менеджер после проверки поступления.",
+        kb=consultation_keyboard(),
+    )
+
+
+def handle_support_finance(vk: Any, user_id: int) -> None:
+    safe_send(
+        vk,
+        user_id,
+        "Финансовые условия:\n"
+        "В кабинете отображаются договор, тип оплаты, текущая задолженность, кредитный лимит и доступный остаток.\n"
+        "Если лимит по отсрочке превышен, новую заявку оформить нельзя до погашения задолженности.",
+        kb=consultation_keyboard(),
+    )
+
+
+def handle_support_documents_help(vk: Any, user_id: int) -> None:
+    safe_send(
+        vk,
+        user_id,
+        "Документы:\n"
+        "• Счёт на оплату формируется после оформления заявки.\n"
+        "• Товарная накладная доступна как документ по заказу.\n"
+        "• Акт сверки можно сформировать в разделе «Документы».\n"
+        "• Дубликат накладной можно запросить по ранее оформленной заявке.",
+        kb=consultation_keyboard(),
+    )
+
+
+def handle_send_waybill_request(vk: Any, user_id: int, request_id: int) -> None:
+    if not is_vk_admin(user_id):
+        safe_send(vk, user_id, "Команда доступна только администратору.", kb=keyboard_for_role(user_id))
+        return
+    try:
+        result = process_waybill_request_send(request_id)
+    except (LookupError, ValueError, RuntimeError, FileNotFoundError) as exc:
+        safe_send(vk, user_id, str(exc), kb=keyboard_for_role(user_id))
+        return
+    document = result.get("document") or {}
+    order = result.get("order") or {}
+    safe_send(
+        vk,
+        user_id,
+        f"Документ отправлен.\nЗаявка: {order.get('order_number')}\nДокумент: {document.get('title')}",
+        kb=keyboard_for_role(user_id),
+    )
+
+
 def handle_help(vk: Any, user_id: int) -> None:
     safe_send(
         vk,
@@ -1759,7 +2231,7 @@ def handle_cooperation_help(vk: Any, user_id: int) -> None:
 
 def handle_support_prompt(vk: Any, user_id: int) -> None:
     pending_support_requests[user_id] = True
-    safe_send(vk, user_id, "Напишите ваш вопрос одним сообщением.", kb=keyboard_for_role(user_id))
+    safe_send(vk, user_id, "Опишите ваш вопрос одним сообщением.", kb=keyboard_for_role(user_id))
 
 
 def handle_support_list(vk: Any, user_id: int) -> None:
@@ -1772,7 +2244,8 @@ def handle_support_list(vk: Any, user_id: int) -> None:
         return
     lines = ["Последние обращения:"]
     for item in requests:
-        lines.append(f"• #{item.get('id')} / VK {item.get('vk_id')} / {item.get('subject')} / {item.get('status')}")
+        status_label = SUPPORT_REQUEST_STATUS_LABELS.get(str(item.get("status") or ""), str(item.get("status") or ""))
+        lines.append(f"• #{item.get('id')} / VK {item.get('vk_id')} / {item.get('subject')} / {status_label}")
     safe_send(vk, user_id, "\n".join(lines), kb=keyboard_for_role(user_id))
 
 
@@ -2082,8 +2555,8 @@ def duplicate_document(payload: DuplicateDocumentIn) -> Dict[str, Any]:
         {
             "contractor_id": contractor["id"],
             "order_id": payload.order_id,
-            "document_type": "duplicate_invoice",
-            "status": "new",
+            "document_type": "waybill",
+            "status": "pending",
             "contractor_document_id": None,
             "comment": None,
             "created_at": iso_now(),
@@ -2097,12 +2570,15 @@ def duplicate_document(payload: DuplicateDocumentIn) -> Dict[str, Any]:
     try:
         notify_admins(
             "Новый запрос документа.\n\n"
-            "Тип: Дубликат накладной\n"
+            "Тип: Товарная накладная\n"
             f"Организация: {contractor.get('company_name')}\n"
             f"Договор: {contractor.get('contract_number')}\n"
-            f"Заявка: {order.get('order_number') or format_order_number(int(order.get('id') or 0))}\n"
+            f"Заказ: {order.get('order_number') or format_order_number(int(order.get('id') or 0))}\n"
             f"Номер заявки клиента: {format_customer_order_number(order.get('customer_order_number'))}\n\n"
-            "Откройте панель управления для обработки запроса."
+            "Откройте раздел обращений для отправки документа.",
+            kb=keyboard(
+                [[payload_button("Отправить документ", {"cmd": "send_waybill", "request_id": int(document_request.get("id") or 0)}, "primary")]]
+            ),
         )
     except Exception:
         logger.exception("duplicate invoice admin notification failed order_id=%s", payload.order_id)
@@ -2117,6 +2593,9 @@ def create_support_request(payload: SupportRequestIn) -> Dict[str, Any]:
             "subject": payload.subject.strip(),
             "message": payload.message.strip(),
             "status": "new",
+            "source": "mini_app",
+            "conversation_state": None,
+            "updated_at": iso_now(),
             "created_at": iso_now(),
         }
     )
@@ -2248,8 +2727,11 @@ def admin_support_requests(
     status: Optional[str] = Query(default=None),
 ) -> List[Dict[str, Any]]:
     ensure_admin(vk_id)
-    if status and status not in {"new", "in_progress", "closed"}:
+    if status == "answered":
+        status = "in_progress"
+    if status and status not in SUPPORT_REQUEST_STATUSES:
         raise HTTPException(400, "Некорректный статус обращения")
+    auto_close_support_requests()
     return repo.list_support_requests(limit=limit, status=status)
 
 
@@ -2375,10 +2857,45 @@ def admin_update_support_request(
 ) -> Dict[str, Any]:
     ensure_admin(vk_id)
     try:
-        support_request = repo.update_support_request(request_id, {"status": payload.status})
+        support_request = repo.update_support_request(request_id, {"status": payload.status, "updated_at": iso_now()})
     except LookupError as exc:
         raise HTTPException(404, str(exc))
     return {"message": "Статус обращения обновлён", "support_request": support_request}
+
+
+@app.post("/admin/support/{request_id}/reply")
+def admin_reply_support_request(
+    request_id: int,
+    payload: SupportReplyIn,
+    vk_id: int = Query(..., ge=1),
+) -> Dict[str, Any]:
+    ensure_admin(vk_id)
+    support_request = repo.get_support_request(request_id)
+    if not support_request:
+        raise HTTPException(404, "Обращение не найдено")
+
+    user_vk_id = int(support_request.get("vk_id") or 0)
+    if user_vk_id <= 0:
+        raise HTTPException(400, "У обращения не указан VK ID пользователя")
+
+    reply_text = payload.reply.strip()
+    sent = send_vk_notification(user_vk_id, f"Ответ менеджера:\n\n{reply_text}")
+    if not sent:
+        raise HTTPException(502, "Не удалось отправить ответ пользователю")
+
+    now = iso_now()
+    updated_request = repo.update_support_request(
+        request_id,
+        {
+            "admin_reply": reply_text,
+            "admin_id": vk_id,
+            "answered_at": now,
+            "updated_at": now,
+            "status": "in_progress",
+            "conversation_state": "awaiting_user_followup",
+        },
+    )
+    return {"message": "Ответ отправлен пользователю", "support_request": updated_request}
 
 
 @app.get("/admin/document-requests")
@@ -2405,6 +2922,22 @@ def admin_update_document_request(
     except LookupError as exc:
         raise HTTPException(404, str(exc))
     return {"message": "Статус запроса документа обновлён", "document_request": document_request}
+
+
+@app.post("/admin/document-requests/{request_id}/send")
+def admin_send_waybill_document(request_id: int, vk_id: int = Query(..., ge=1)) -> Dict[str, Any]:
+    ensure_admin(vk_id)
+    try:
+        result = process_waybill_request_send(request_id)
+    except LookupError as exc:
+        raise HTTPException(404, str(exc))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(502, str(exc))
+    return {"message": "Документ отправлен пользователю", **result}
 
 
 @app.post("/admin/leads/{lead_id}/approve")
@@ -2477,6 +3010,39 @@ def admin_approve_lead(lead_id: int, vk_id: int = Query(..., ge=1)) -> Dict[str,
     if notification_warning:
         response["warning"] = notification_warning
     return response
+
+
+@app.post("/admin/leads/{lead_id}/reject")
+def admin_reject_lead(lead_id: int, vk_id: int = Query(..., ge=1)) -> Dict[str, Any]:
+    ensure_admin(vk_id)
+    lead = repo.get_lead_request_by_id(lead_id)
+    if not lead:
+        raise HTTPException(404, "Заявка на сотрудничество не найдена")
+    if str(lead.get("status") or "") == "done":
+        raise HTTPException(400, "Одобренную заявку нельзя отклонить")
+
+    try:
+        updated_lead = repo.update_lead_request(lead_id, {"status": "rejected"})
+    except Exception:
+        logger.exception("lead reject failed lead_id=%s", lead_id)
+        raise HTTPException(500, "Не удалось отклонить заявку")
+
+    user_vk_id = int(lead.get("vk_id") or 0)
+    notification_sent = False
+    if user_vk_id > 0:
+        notification_sent = send_vk_notification(
+            user_vk_id,
+            "Ваша заявка на сотрудничество отклонена.\n\n"
+            "Для уточнения деталей свяжитесь с менеджером Слободского РАЙПО.",
+        )
+        if not notification_sent:
+            logger.warning("lead reject notification failed lead_id=%s vk_id=%s", lead_id, user_vk_id)
+
+    return {
+        "message": "Заявка отклонена",
+        "lead_request": updated_lead,
+        "notification_sent": notification_sent,
+    }
 
 
 @app.post("/admin/reminders/run")
@@ -2559,23 +3125,24 @@ def handle_text_message(vk: Any, user_id: int, text: str) -> None:
                     "subject": subject,
                     "message": normalized,
                     "status": "new",
+                    "source": "bot",
+                    "conversation_state": "awaiting_admin_reply",
+                    "updated_at": iso_now(),
                     "created_at": iso_now(),
                 }
             )
             try:
                 notify_admins(
                     "Новое обращение пользователя.\n\n"
-                    f"Тема: {subject}\n"
                     f"VK ID: {user_id}\n"
-                    f"Сообщение: {normalized}\n\n"
-                    "Откройте раздел консультаций для обработки."
+                    f"Сообщение:\n{normalized}"
                 )
             except Exception:
                 logger.exception("support admin notification failed from bot user_id=%s", user_id)
             safe_send(
                 vk,
                 user_id,
-                "Обращение зарегистрировано. Менеджер сможет обработать его в панели управления.",
+                "Ваше обращение зарегистрировано.\nОжидайте ответа менеджера.",
                 kb=keyboard_for_role(user_id),
             )
         except Exception:
@@ -2595,7 +3162,22 @@ def handle_text_message(vk: Any, user_id: int, text: str) -> None:
     if "контакт" in lowered:
         handle_contacts(vk, user_id)
         return
-    if "помощ" in lowered or "справк" in lowered or "консульт" in lowered:
+    if lowered == "как оформить заказ?":
+        handle_support_order_help(vk, user_id)
+        return
+    if lowered == "способы оплаты":
+        handle_support_payment_methods(vk, user_id)
+        return
+    if lowered == "финансовые условия":
+        handle_support_finance(vk, user_id)
+        return
+    if lowered == "документы":
+        handle_support_documents_help(vk, user_id)
+        return
+    if "консульт" in lowered:
+        handle_consultation_menu(vk, user_id)
+        return
+    if "помощ" in lowered or "справк" in lowered:
         handle_help(vk, user_id)
         return
     if "каталог" in lowered or "ассортимент" in lowered:
@@ -2656,7 +3238,14 @@ def parse_payload(event: Any) -> Optional[Dict[str, Any]]:
     return None
 
 
-def dispatch_command(vk: Any, user_id: int, command: str) -> None:
+def dispatch_command(vk: Any, user_id: int, command: str, payload: Optional[Dict[str, Any]] = None) -> None:
+    if command == "send_waybill":
+        request_id = int((payload or {}).get("request_id") or 0)
+        if request_id <= 0:
+            safe_send(vk, user_id, "Не указан запрос накладной.", kb=keyboard_for_role(user_id))
+            return
+        handle_send_waybill_request(vk, user_id, request_id)
+        return
     handlers: Dict[str, Callable[[Any, int], None]] = {
         "about": handle_about,
         "contacts": handle_contacts,
@@ -2667,6 +3256,11 @@ def dispatch_command(vk: Any, user_id: int, command: str) -> None:
         "history": handle_history,
         "documents": handle_documents,
         "help": handle_help,
+        "consultation": handle_consultation_menu,
+        "support_order": handle_support_order_help,
+        "support_payment_methods": handle_support_payment_methods,
+        "support_finance": handle_support_finance,
+        "support_documents": handle_support_documents_help,
         "payment_help": handle_payment_help,
         "support": handle_support_prompt,
         "support_list": handle_support_list,
@@ -2698,7 +3292,7 @@ def run_bot_sync() -> None:
                 user_id = int(event.user_id)
                 event_payload = parse_payload(event)
                 if event_payload and event_payload.get("cmd"):
-                    dispatch_command(vk, user_id, str(event_payload["cmd"]))
+                    dispatch_command(vk, user_id, str(event_payload["cmd"]), event_payload)
                 else:
                     handle_text_message(vk, user_id, getattr(event, "text", "") or "")
         except KeyboardInterrupt:
