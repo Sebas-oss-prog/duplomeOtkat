@@ -958,7 +958,8 @@
         contractorSearch: "",
         leadSearch: "",
         supportSearch: "",
-        supportStatus: ""
+        supportStatus: "",
+        supportReplyId: null
       }
     };
 
@@ -1116,6 +1117,31 @@
 
     function documentStatusLabel(value) {
       return value === "active" ? "Доступен" : value || "Документ";
+    }
+
+    function leadStatusLabel(value) {
+      if (value === "done") return "Одобрено";
+      if (value === "rejected") return "Отклонено";
+      if (value === "in_progress") return "В работе";
+      return "Новая";
+    }
+
+    function documentTypeLabel(value) {
+      if (value === "invoice") return "Счёт";
+      if (value === "waybill") return "Товарная накладная";
+      if (value === "reconciliation_act") return "Акт сверки";
+      if (value === "duplicate_invoice") return "Дубликат накладной";
+      return value || "Документ";
+    }
+
+    function documentRequestStatusLabel(value) {
+      if (value === "new") return "Новый";
+      if (value === "pending") return "Ожидает отправки";
+      if (value === "in_progress") return "В работе";
+      if (value === "done") return "Выполнен";
+      if (value === "sent") return "Отправлен";
+      if (value === "rejected") return "Отклонён";
+      return value || "Не указан";
     }
 
     function categoryNameById(categoryId) {
@@ -1326,6 +1352,14 @@
       if (["waiting_payment", "payment_check"].includes(status)) return "badge warn";
       if (["cancelled", "rejected", "blocked"].includes(status)) return "badge danger";
       return "badge";
+    }
+
+    function supportStatusLabel(value) {
+      if (value === "new") return "Новое";
+      if (value === "in_progress") return "В работе";
+      if (value === "answered") return "В работе";
+      if (value === "closed") return "Завершено";
+      return value || "Не указан";
     }
 
     function formatDate(value) {
@@ -1750,11 +1784,44 @@
         const matchesSearch = !searchValue || haystack.includes(searchValue);
         return matchesStatus && matchesSearch;
       });
+      const leads = state.admin.leads || [];
       const documentRequests = state.admin.documentRequests || [];
-      const adminDocuments = state.admin.documents || [];
 
       return `
         <div class="admin-stack">
+          <div class="card">
+            <div class="toolbar-row">
+              <div>
+                <h2 class="section-title">Заявки на сотрудничество</h2>
+                <p class="muted">Новые организации, которые ожидают решения администратора.</p>
+              </div>
+            </div>
+          </div>
+          <div class="admin-list">
+            ${leads.length ? leads.map((lead) => `
+              <article class="admin-card">
+                <div class="admin-card-header">
+                  <div>
+                    <div class="admin-card-title">${lead.company_name}</div>
+                    <div class="admin-card-meta">ИНН: ${lead.inn || "не указан"} · ${lead.city || "город не указан"}</div>
+                    <div class="admin-card-meta">Контакт: ${lead.contact_name || "не указан"} · ${lead.phone || "телефон не указан"}</div>
+                    <div class="admin-card-meta">${formatDate(lead.created_at)}</div>
+                  </div>
+                  <span class="${lead.status === "rejected" ? "badge danger" : lead.status === "done" ? "badge" : "badge warn"}">${leadStatusLabel(lead.status)}</span>
+                </div>
+                <div class="action-row" style="margin-top: 12px;">
+                  ${["new","pending","in_progress"].includes(lead.status || "new")
+                    ? `
+                      <button class="btn primary" data-approve-lead="${lead.id}">Принять</button>
+                      <button class="btn danger" data-reject-lead="${lead.id}">Отклонить</button>
+                    `
+                    : lead.status === "done"
+                      ? `<span class="badge">Контрагент создан</span>`
+                      : `<span class="badge danger">Заявка отклонена</span>`}
+                </div>
+              </article>
+            `).join("") : `<div class="admin-empty">Заявки на сотрудничество не найдены.</div>`}
+          </div>
           <div class="card">
             <div class="toolbar-row">
               <div>
@@ -1771,7 +1838,7 @@
                 <option value="">Все статусы</option>
                 <option value="new" ${statusFilter === "new" ? "selected" : ""}>Новые</option>
                 <option value="in_progress" ${statusFilter === "in_progress" ? "selected" : ""}>В работе</option>
-                <option value="closed" ${statusFilter === "closed" ? "selected" : ""}>Закрытые</option>
+                <option value="closed" ${statusFilter === "closed" ? "selected" : ""}>Завершённые</option>
               </select>
             </div>
           </div>
@@ -1780,20 +1847,32 @@
               <article class="admin-card">
                 <div class="admin-card-header">
                   <div>
-                    <div class="admin-card-title">${item.subject}</div>
-                    <div class="admin-card-meta">VK ID: ${item.vk_id} · ${formatDate(item.created_at)}</div>
+                    <div class="admin-card-title">${item.subject || "Обращение пользователя"}</div>
+                    <div class="admin-card-meta">VK ID: ${item.vk_id} · ${formatDate(item.created_at)}${item.source ? ` · ${item.source}` : ""}</div>
                     <div class="admin-card-meta">${item.message}</div>
+                    ${item.admin_reply ? `
+                      <div class="notice" style="margin-top: 10px;">
+                        <strong>Ответ менеджера:</strong><br>${escapeHtml(item.admin_reply)}
+                        <div class="meta">Дата ответа: ${formatDate(item.answered_at)}</div>
+                      </div>
+                    ` : ""}
                   </div>
-                  <span class="${adminStatusBadgeClass(item.status)}">${item.status === "new" ? "Новое" : item.status === "in_progress" ? "В работе" : "Закрыто"}</span>
+                  <span class="${adminStatusBadgeClass(item.status)}">${supportStatusLabel(item.status)}</span>
                 </div>
                 <div class="action-row" style="margin-top: 12px;">
-                  <select data-support-status="${item.id}">
-                    <option value="new" ${item.status === "new" ? "selected" : ""}>Новое</option>
-                    <option value="in_progress" ${item.status === "in_progress" ? "selected" : ""}>В работе</option>
-                    <option value="closed" ${item.status === "closed" ? "selected" : ""}>Закрыто</option>
-                  </select>
-                  <button class="btn primary" data-save-support="${item.id}">Сохранить статус</button>
+                  ${item.status === "closed"
+                    ? `<span class="badge">Обращение завершено</span>`
+                    : `<button class="btn soft" data-reply-support="${item.id}">Ответить пользователю</button>`}
                 </div>
+                ${item.status !== "closed" && String(state.adminUi.supportReplyId || "") === String(item.id) ? `
+                  <form class="form" data-support-reply-form="${item.id}" style="margin-top: 12px;">
+                    <div class="field">
+                      <label>Ответ менеджера</label>
+                      <textarea data-support-reply-text="${item.id}" placeholder="Введите ответ пользователю" required></textarea>
+                    </div>
+                    <button class="btn primary" type="submit">Ответить пользователю</button>
+                  </form>
+                ` : ""}
               </article>
             `).join("") : `<div class="admin-empty">Обращения не найдены.</div>`}
           </div>
@@ -1818,80 +1897,14 @@
                   <span class="${adminStatusBadgeClass(item.status)}">${documentRequestStatusLabel(item.status)}</span>
                 </div>
                 <div class="action-row" style="margin-top: 12px;">
-                  <select data-document-request-status="${item.id}">
-                    ${["new","in_progress","done","rejected"].map((status) => `<option value="${status}" ${item.status === status ? "selected" : ""}>${documentRequestStatusLabel(status)}</option>`).join("")}
-                  </select>
-                  <button class="btn primary" data-save-document-request="${item.id}">Сохранить статус</button>
+                  ${["done","sent"].includes(item.status)
+                    ? `<span class="badge">Документ отправлен</span>`
+                    : item.status === "rejected"
+                      ? `<span class="badge danger">Запрос отклонён</span>`
+                      : `<button class="btn primary" data-send-document-request="${item.id}">Отправить документ</button>`}
                 </div>
               </article>
             `).join("") : `<div class="admin-empty">Запросы документов не найдены.</div>`}
-          </div>
-          <div class="card">
-            <div class="toolbar-row">
-              <div>
-                <h2 class="section-title">Документы</h2>
-                <p class="muted">Загрузка документов для контрагентов и привязка к заявкам или запросам документов.</p>
-              </div>
-            </div>
-            <form class="form" id="adminDocumentUploadForm">
-              <div class="form-grid">
-                <div class="field">
-                  <label>Контрагент</label>
-                  <select id="adminDocumentContractor" required>
-                    <option value="">Выберите контрагента</option>
-                    ${(state.admin.contractors || []).map((item) => `<option value="${item.id}">${item.company_name}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Тип документа</label>
-                  <select id="adminDocumentType" required>
-                    <option value="invoice">Счёт</option>
-                    <option value="waybill">Накладная</option>
-                    <option value="contract">Договор</option>
-                    <option value="reconciliation_act">Акт сверки</option>
-                    <option value="other">Документ</option>
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Заявка</label>
-                  <select id="adminDocumentOrder">
-                    <option value="">Без привязки к заявке</option>
-                    ${(state.admin.orders || []).map((item) => `<option value="${item.id}">${displayOrderNumber(item)} · ${item.contractor?.company_name || "Контрагент"}</option>`).join("")}
-                  </select>
-                </div>
-                <div class="field">
-                  <label>Запрос документа</label>
-                  <select id="adminDocumentRequest">
-                    <option value="">Без привязки к запросу</option>
-                    ${documentRequests.filter((item) => item.status !== "done").map((item) => `<option value="${item.id}">${documentTypeLabel(item.document_type)} · ${item.contractor?.company_name || "Контрагент"}</option>`).join("")}
-                  </select>
-                </div>
-              </div>
-              <div class="field">
-                <label>Название</label>
-                <input id="adminDocumentTitle" placeholder="Например, Накладная по заявке ORD-2026-0001" required>
-              </div>
-              <div class="field">
-                <label>Файл</label>
-                <input id="adminDocumentFile" type="file" required>
-              </div>
-              <button class="btn primary" type="submit">Загрузить</button>
-            </form>
-          </div>
-          <div class="admin-list">
-            ${adminDocuments.length ? adminDocuments.map((item) => `
-              <article class="admin-card">
-                <div class="admin-card-header">
-                  <div>
-                    <div class="admin-card-title">${item.title || documentTypeLabel(item.document_type)}</div>
-                    <div class="admin-card-meta">${item.contractor?.company_name || "Контрагент"} · ${documentTypeLabel(item.document_type)}</div>
-                    <div class="admin-card-meta">${item.order ? `${displayOrderNumber(item.order)} · ${displayCustomerOrderNumber(item.order) || "без локального номера"}` : "Без привязки к заявке"}</div>
-                    <div class="admin-card-meta">${formatDate(item.uploaded_at)} · ${documentStatusLabel(item.status)}</div>
-                  </div>
-                  <a class="btn soft" href="${item.file_url}" target="_blank" rel="noreferrer">Скачать</a>
-                </div>
-              </article>
-            `).join("") : `<div class="admin-empty">Документы пока не загружены.</div>`}
           </div>
         </div>
       `;
@@ -1983,13 +1996,24 @@
         state.adminUi.supportStatus = event.target.value;
         renderAdmin();
       });
-      [...el.screens.admin.querySelectorAll("[data-save-support]")].forEach((button) => {
-        button.addEventListener("click", () => saveSupportRequestStatus(button.dataset.saveSupport));
+      [...el.screens.admin.querySelectorAll("[data-reply-support]")].forEach((button) => {
+        button.addEventListener("click", () => {
+          state.adminUi.supportReplyId = button.dataset.replySupport;
+          renderAdmin();
+        });
       });
-      [...el.screens.admin.querySelectorAll("[data-save-document-request]")].forEach((button) => {
-        button.addEventListener("click", () => saveDocumentRequestStatus(button.dataset.saveDocumentRequest));
+      [...el.screens.admin.querySelectorAll("[data-support-reply-form]")].forEach((form) => {
+        form.addEventListener("submit", (event) => submitSupportReply(event, form.dataset.supportReplyForm));
       });
-      document.getElementById("adminDocumentUploadForm")?.addEventListener("submit", uploadAdminDocument);
+      [...el.screens.admin.querySelectorAll("[data-approve-lead]")].forEach((button) => {
+        button.addEventListener("click", () => approveLead(button.dataset.approveLead));
+      });
+      [...el.screens.admin.querySelectorAll("[data-reject-lead]")].forEach((button) => {
+        button.addEventListener("click", () => rejectLead(button.dataset.rejectLead));
+      });
+      [...el.screens.admin.querySelectorAll("[data-send-document-request]")].forEach((button) => {
+        button.addEventListener("click", () => sendDocumentRequest(button.dataset.sendDocumentRequest, button));
+      });
     }
 
     function renderHome() {
@@ -2353,6 +2377,7 @@
                     <div>
                       <strong>${item.title || documentTypeLabel(item.document_type)}</strong>
                       <div class="meta">${documentTypeLabel(item.document_type)} · ${formatDate(item.uploaded_at)}</div>
+                      ${item.order ? `<div class="meta">${displayOrderNumber(item.order)} · ${displayCustomerOrderNumber(item.order) || "без локального номера"}</div>` : ""}
                     </div>
                     <a class="btn soft" href="${item.file_url}" target="_blank" rel="noreferrer">Скачать</a>
                   </div>
@@ -2525,53 +2550,6 @@
         return;
       }
       state.documents = await api(`/documents/list?vk_id=${state.vkId}`);
-    }
-
-    async function fileToBase64(file) {
-      const buffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(buffer);
-      const chunkSize = 0x8000;
-      let binary = "";
-      for (let index = 0; index < bytes.length; index += chunkSize) {
-        binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
-      }
-      return btoa(binary);
-    }
-
-    async function uploadAdminDocument(event) {
-      event.preventDefault();
-      const fileInput = document.getElementById("adminDocumentFile");
-      const file = fileInput?.files?.[0];
-      if (!file) {
-        showToast("Выберите файл", true);
-        return;
-      }
-      const contractorId = document.getElementById("adminDocumentContractor").value;
-      const documentType = document.getElementById("adminDocumentType").value;
-      const title = document.getElementById("adminDocumentTitle").value.trim();
-      const orderId = document.getElementById("adminDocumentOrder").value;
-      const requestId = document.getElementById("adminDocumentRequest").value;
-      try {
-        const fileContentBase64 = await fileToBase64(file);
-        await api(`/admin/documents/upload?vk_id=${state.vkId}`, {
-          method: "POST",
-          body: JSON.stringify({
-            contractor_id: Number(contractorId),
-            document_type: documentType,
-            title,
-            order_id: orderId ? Number(orderId) : null,
-            request_id: requestId ? Number(requestId) : null,
-            file_name: file.name,
-            file_content_base64: fileContentBase64
-          })
-        });
-        showToast("Документ загружен");
-        event.target.reset();
-        await loadAdminData();
-        renderAdmin();
-      } catch (error) {
-        showToast(error.message, true);
-      }
     }
 
     async function loadAdminData() {
@@ -2839,6 +2817,38 @@
       }
     }
 
+    async function rejectLead(leadId) {
+      if (!confirm("Отклонить заявку на сотрудничество?")) return;
+      try {
+        const result = await api(`/admin/leads/${leadId}/reject?vk_id=${state.vkId}`, { method: "POST" });
+        showToast(result.message || "Заявка отклонена");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      }
+    }
+
+    async function sendDocumentRequest(requestId, button) {
+      try {
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Отправляем...";
+        }
+        const result = await api(`/admin/document-requests/${requestId}/send?vk_id=${state.vkId}`, { method: "POST" });
+        showToast(result.message || "Документ отправлен");
+        await loadAdminData();
+        renderAdmin();
+      } catch (error) {
+        showToast(error.message, true);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Отправить документ";
+        }
+      }
+    }
+
     async function submitSupportRequest(event) {
       event.preventDefault();
       const subject = document.getElementById("supportSubject")?.value.trim() || "";
@@ -2863,73 +2873,44 @@
       }
     }
 
-    async function saveSupportRequestStatus(requestId) {
-      const select = el.screens.admin.querySelector(`[data-support-status="${requestId}"]`);
-      if (!select) return;
-      try {
-        await api(`/admin/support/${requestId}?vk_id=${state.vkId}`, {
-          method: "PATCH",
-          body: JSON.stringify({ status: select.value })
-        });
-        showToast("Статус обращения обновлён");
-        await loadAdminData();
-        renderAdmin();
-      } catch (error) {
-        showToast(error.message, true);
-      }
-    }
-
-    async function saveDocumentRequestStatus(requestId) {
-      const select = el.screens.admin.querySelector(`[data-document-request-status="${requestId}"]`);
-      if (!select) return;
-      try {
-        await api(`/admin/document-requests/${requestId}?vk_id=${state.vkId}`, {
-          method: "PATCH",
-          body: JSON.stringify({ status: select.value })
-        });
-        showToast("Статус запроса документа обновлён");
-        await loadAdminData();
-        renderAdmin();
-      } catch (error) {
-        showToast(error.message, true);
-      }
-    }
-
-    /* legacy upload kept for reference
-    async function uploadAdminDocument(event) {
+    async function submitSupportReply(event, requestId) {
       event.preventDefault();
-      const fileInput = document.getElementById("adminDocumentFile");
-      const file = fileInput?.files?.[0];
-      if (!file) {
-        showToast("Выберите файл", true);
+      const textarea = el.screens.admin.querySelector(`[data-support-reply-text="${requestId}"]`);
+      const reply = textarea?.value.trim() || "";
+      if (!reply) {
+        showToast("Введите ответ пользователю", true);
         return;
       }
-      const formData = new FormData();
-      formData.append("contractor_id", document.getElementById("adminDocumentContractor").value);
-      formData.append("document_type", document.getElementById("adminDocumentType").value);
-      formData.append("title", document.getElementById("adminDocumentTitle").value.trim());
-      if (document.getElementById("adminDocumentOrder").value) {
-        formData.append("order_id", document.getElementById("adminDocumentOrder").value);
-      }
-      if (document.getElementById("adminDocumentRequest").value) {
-        formData.append("request_id", document.getElementById("adminDocumentRequest").value);
-      }
-      formData.append("file", file);
+      const button = event.target.querySelector("button[type='submit']");
       try {
-        await api(`/admin/documents/upload?vk_id=${state.vkId}`, {
+        if (button) {
+          button.disabled = true;
+          button.textContent = "Отправляем...";
+        }
+        const result = await api(`/admin/support/${requestId}/reply?vk_id=${state.vkId}`, {
           method: "POST",
-          body: formData
+          body: JSON.stringify({ reply })
         });
-        showToast("Документ загружен");
-        event.target.reset();
-        await loadAdminData();
+        const updated = result.support_request;
+        if (updated) {
+          state.admin.supportRequests = (state.admin.supportRequests || []).map((item) =>
+            String(item.id) === String(requestId) ? updated : item
+          );
+        } else {
+          await loadAdminData();
+        }
+        state.adminUi.supportReplyId = null;
+        showToast(result.message || "Ответ отправлен пользователю");
         renderAdmin();
       } catch (error) {
         showToast(error.message, true);
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = "Отправить";
+        }
       }
     }
-
-    */
 
     async function loadAdminData() {
       if (state.role !== "admin") {
